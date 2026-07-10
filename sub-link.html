@@ -18,10 +18,7 @@
         justify-content: center;
         padding: 40px 20px;
     }
-    .container {
-        width: 100%;
-        max-width: 500px;
-    }
+    .container { width: 100%; max-width: 500px; }
     .card {
         background: #121826;
         border: 1px solid rgba(255,255,255,0.06);
@@ -36,8 +33,7 @@
         margin-bottom: 20px;
     }
     .avatar {
-        width: 64px;
-        height: 64px;
+        width: 64px; height: 64px;
         background: #2563eb;
         border-radius: 50%;
         display: flex;
@@ -61,6 +57,7 @@
     }
     .badge.error { background: rgba(239,68,68,0.1); color: #fca5a5; border-color: rgba(239,68,68,0.2); }
     .badge.loading { background: rgba(59,130,246,0.1); color: #60a5fa; border-color: rgba(59,130,246,0.2); }
+    .badge.active { background: rgba(16,185,129,0.1); color: #6ee7b7; border-color: rgba(16,185,129,0.2); }
     .stat-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -90,8 +87,7 @@
     .entry-detail { font-size: 11px; color: #6b7280; font-family: 'Fira Code', monospace; }
     .entry-actions { display: flex; gap: 8px; flex-shrink: 0; }
     .btn-icon {
-        width: 36px;
-        height: 36px;
+        width: 36px; height: 36px;
         border-radius: 8px;
         background: #1a202c;
         border: 1px solid #2d3748;
@@ -142,6 +138,20 @@
     .info-row:last-child { border-bottom: none; }
     .info-label { color: #8b949e; }
     .info-value { color: #e5e7eb; font-family: 'Fira Code', monospace; font-size: 12px; }
+    .progress-track {
+        width: 100%;
+        background: #1a202c;
+        border-radius: 999px;
+        height: 8px;
+        overflow: hidden;
+        border: 1px solid #2d3748;
+    }
+    .progress-fill {
+        height: 100%;
+        background: #3b82f6;
+        border-radius: 999px;
+        transition: width 0.5s;
+    }
 </style>
 </head>
 <body>
@@ -178,8 +188,8 @@
                 <span style="font-size:13px;font-weight:500;"><i class="fas fa-chart-pie" style="color:#3b82f6;"></i> Data Usage</span>
                 <span style="font-size:14px;font-weight:700;" id="usageText">-</span>
             </div>
-            <div class="progress-track" style="width:100%;background:#1a202c;border-radius:999px;height:8px;overflow:hidden;border:1px solid #2d3748;">
-                <div class="progress-fill" id="usageFill" style="width:0%;height:100%;background:#3b82f6;border-radius:999px;transition:width 0.5s;"></div>
+            <div class="progress-track">
+                <div class="progress-fill" id="usageFill" style="width:0%;"></div>
             </div>
             <div class="stat-grid">
                 <div class="stat-box">
@@ -205,24 +215,27 @@
 </div>
 
 <script>
-// ====== لیست کلاینت‌ها ======
+// ====== تنظیمات ======
+const PANEL_BASE = '/mikaeel/panel/api';
+const ADDRESS = '5tuj-production.up.railway.app';
+const PORT = '8080';
+
+// ====== لیست کلاینت‌ها (برای fallback) ======
 const CLIENTS = [
+    { id: 'opukizbfvt3semro', email: '5ua4rze617', uuid: 'd9445eb5-64cc-4702-906f-448bd418a949' },
     { id: 'fqnpgcsvvuksjv3k', email: 'adweypu67d', uuid: '861c4ead-11d8-43ef-9f19-405408e7a915' },
     { id: 'txctcczehekbjlkq', email: '2i26ggip4n', uuid: '91ee0eab-6f58-4841-9421-138a27f7d00b' },
     { id: 'ufa7zpn9', email: 'ufa7zpn9', uuid: 'bbf1d118-aecd-408a-94fa-717cc6746aff' },
     { id: 'z7k8oqou', email: 'z7k8oqou', uuid: '5d88e790-a966-4a50-a34d-90acb6129313' }
 ];
 
-const ADDRESS = '5tuj-production.up.railway.app';
-const PORT = '8080';
-
-// ====== ساخت لینک VLESS ======
-function getVLESSLink(uuid, email) {
+// ====== ساخت لینک VLESS (Fallback) ======
+function buildVLESS(uuid, email) {
     return `vless://${uuid}@${ADDRESS}:${PORT}?encryption=none&security=none&type=ws&host=${ADDRESS}&path=/#${email}`;
 }
 
 // ====== تشخیص پروتکل ======
-function detectProtocol(uri) {
+function detectProto(uri) {
     if (uri.startsWith('vless://')) return { key: 'vless', label: 'VLESS', icon: 'fa-bolt', color: '#3b82f6' };
     if (uri.startsWith('vmess://')) return { key: 'vmess', label: 'VMESS', icon: 'fa-shuffle', color: '#a78bfa' };
     if (uri.startsWith('trojan://')) return { key: 'trojan', label: 'TROJAN', icon: 'fa-mask', color: '#ec4899' };
@@ -252,8 +265,17 @@ function setStatus(text) {
     document.getElementById('statusMsg').textContent = text;
 }
 
-// ====== نمایش ======
-function renderEntries(links) {
+// ====== فرمت بایت ======
+function fmtBytes(bytes) {
+    if (!bytes || bytes < 0) return '0 B';
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    let i = 0, v = bytes;
+    while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
+    return v.toFixed(v >= 10 ? 0 : 1) + ' ' + units[i];
+}
+
+// ====== نمایش لینک‌ها ======
+function renderLinks(links) {
     const list = document.getElementById('configsList');
     const countBadge = document.getElementById('countBadge');
     const emptyMsg = document.getElementById('emptyMsg');
@@ -270,7 +292,7 @@ function renderEntries(links) {
     countBadge.textContent = `(${links.length})`;
     
     links.forEach((link, idx) => {
-        const proto = detectProtocol(link);
+        const proto = detectProto(link);
         const div = document.createElement('div');
         div.className = 'entry';
         
@@ -308,110 +330,173 @@ function renderEntries(links) {
 }
 
 // ====== دریافت از API پنل ======
-async function loadFromAPI(emailOrId) {
+async function fetchFromAPI(email, subId) {
     try {
-        setStatus('Connecting to panel API...');
-        setBadge('loading', '⏳ Connecting');
-        
-        // لاگین به پنل
-        const loginRes = await fetch('/mikaeel/panel/api/login', {
+        // مرحله 1: لاگین
+        setStatus('Logging in to panel...');
+        const loginRes = await fetch(`${PANEL_BASE}/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                username: 'admin',
-                password: 'admin'
-            })
+            body: JSON.stringify({ username: 'admin', password: 'admin' })
         });
         
         if (!loginRes.ok) {
-            throw new Error('Login failed: ' + loginRes.status);
+            throw new Error(`Login failed: ${loginRes.status}`);
         }
         
-        setStatus('Fetching configs...');
-        setBadge('loading', '⏳ Fetching');
+        const loginData = await loginRes.json();
+        if (!loginData.success) {
+            throw new Error('Login failed: ' + (loginData.msg || 'Unknown error'));
+        }
         
-        // دریافت لینک‌ها با API
-        const linksRes = await fetch(`/mikaeel/panel/api/clients/links/${emailOrId}`, {
+        // مرحله 2: دریافت لینک‌ها با ایمیل یا subId
+        setStatus('Fetching configs...');
+        let url;
+        if (subId) {
+            url = `${PANEL_BASE}/clients/subLinks/${subId}`;
+        } else if (email) {
+            url = `${PANEL_BASE}/clients/links/${email}`;
+        } else {
+            throw new Error('No email or subId provided');
+        }
+        
+        const linksRes = await fetch(url, {
             method: 'GET',
-            credentials: 'include'
+            credentials: 'include',
+            headers: { 'Accept': 'application/json' }
         });
         
         if (!linksRes.ok) {
             if (linksRes.status === 404) {
-                throw new Error(`Client "${emailOrId}" not found`);
+                throw new Error(`Client not found: ${email || subId}`);
             }
             throw new Error(`API error: ${linksRes.status}`);
         }
         
-        const links = await linksRes.json();
-        console.log('Links from API:', links);
-        
-        if (!links || links.length === 0) {
-            throw new Error('No links found for this client');
+        const linksData = await linksRes.json();
+        if (!linksData.success) {
+            throw new Error('API error: ' + (linksData.msg || 'Unknown'));
         }
         
-        // دریافت اطلاعات ترافیک
-        try {
-            const trafficRes = await fetch(`/mikaeel/panel/api/clients/traffic/${emailOrId}`, {
-                method: 'GET',
-                credentials: 'include'
-            });
-            if (trafficRes.ok) {
-                const traffic = await trafficRes.json();
-                if (traffic && traffic.total) {
-                    const used = (traffic.up || 0) + (traffic.down || 0);
-                    const total = traffic.total || 0;
-                    const pct = total > 0 ? Math.min(100, (used/total)*100) : 0;
-                    
-                    document.getElementById('usageSection').classList.remove('hidden');
-                    document.getElementById('usageFill').style.width = pct + '%';
-                    document.getElementById('usageText').innerHTML = 
-                        `${formatBytes(used)} <span style="font-size:12px;color:#8b949e;font-weight:400;">of ${formatBytes(total)}</span>`;
-                    
-                    if (traffic.expiryTime) {
-                        const expire = traffic.expiryTime;
-                        const now = Date.now();
-                        const days = Math.max(0, Math.ceil((expire - now) / 86400000));
-                        document.getElementById('expireDate').textContent = new Date(expire).toLocaleDateString();
-                        document.getElementById('daysLeft').textContent = days + ' days';
+        let links = linksData.obj || [];
+        if (typeof links === 'string') {
+            try { links = JSON.parse(links); } catch(e) { links = [links]; }
+        }
+        if (!Array.isArray(links)) links = [links];
+        
+        // مرحله 3: دریافت ترافیک (اختیاری)
+        if (email) {
+            try {
+                const trafficRes = await fetch(`${PANEL_BASE}/clients/traffic/${email}`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                if (trafficRes.ok) {
+                    const trafficData = await trafficRes.json();
+                    if (trafficData.success && trafficData.obj) {
+                        const t = trafficData.obj;
+                        const used = (t.up || 0) + (t.down || 0);
+                        const total = t.total || 0;
+                        const pct = total > 0 ? Math.min(100, (used/total)*100) : 0;
+                        
+                        document.getElementById('usageSection').classList.remove('hidden');
+                        document.getElementById('usageFill').style.width = pct + '%';
+                        document.getElementById('usageFill').style.background = pct > 90 ? '#ef4444' : pct > 70 ? '#f59e0b' : '#3b82f6';
+                        document.getElementById('usageText').innerHTML = 
+                            `${fmtBytes(used)} <span style="font-size:12px;color:#8b949e;font-weight:400;">of ${fmtBytes(total)}</span>`;
+                        
+                        if (t.expiryTime && t.expiryTime > 0) {
+                            const now = Date.now();
+                            const days = Math.max(0, Math.ceil((t.expiryTime - now) / 86400000));
+                            document.getElementById('expireDate').textContent = new Date(t.expiryTime).toLocaleDateString();
+                            document.getElementById('daysLeft').textContent = days + ' days';
+                        }
                     }
                 }
-            }
-        } catch (e) {
-            console.warn('Traffic info not available:', e);
+            } catch(e) { console.warn('Traffic fetch failed:', e); }
         }
         
-        window.__rawLinks = links;
-        renderEntries(links);
-        setStatus(`Ready (${emailOrId})`);
-        setBadge('active', '✅ Active');
+        return links;
+    } catch (error) {
+        console.error('API Error:', error);
+        throw error;
+    }
+}
+
+// ====== لود اصلی ======
+async function loadSubscription(id) {
+    // اگر id=all باشد، همه کلاینت‌ها را با fallback نمایش بده
+    if (id === 'all' || id === 'ALL') {
+        const links = CLIENTS.map(c => buildVLESS(c.uuid, c.email));
+        document.getElementById('userTitle').textContent = `All Clients (${CLIENTS.length})`;
+        document.getElementById('infoEmail').textContent = 'Multiple';
+        document.getElementById('infoUUID').textContent = '-';
+        document.getElementById('infoAddress').textContent = `${ADDRESS}:${PORT}`;
+        setStatus(`Showing ${CLIENTS.length} configs`);
+        setBadge('active', `✅ ${CLIENTS.length} Configs`);
+        renderLinks(links);
+        return;
+    }
+    
+    // پیدا کردن کلاینت در لیست
+    const client = CLIENTS.find(c => c.id === id || c.email === id);
+    let email = client?.email || id;
+    let subId = client?.id || null;
+    
+    // اگر کلاینت در لیست نبود، از id به عنوان email استفاده کن
+    if (!client && !id.includes('@')) {
+        // احتمالاً subId است
+        subId = id;
+        email = null;
+    }
+    
+    try {
+        setStatus('Connecting to panel API...');
+        setBadge('loading', '⏳ Connecting');
         
-        // بروزرسانی اطلاعات کلاینت
-        const client = CLIENTS.find(c => c.email === emailOrId || c.id === emailOrId);
+        // تلاش با API
+        const links = await fetchFromAPI(email, subId);
+        
+        if (links && links.length > 0) {
+            // بروزرسانی اطلاعات
+            if (client) {
+                document.getElementById('userTitle').textContent = client.email;
+                document.getElementById('infoEmail').textContent = client.email;
+                document.getElementById('infoUUID').textContent = client.uuid;
+                document.getElementById('infoAddress').textContent = `${ADDRESS}:${PORT}`;
+            }
+            
+            renderLinks(links);
+            setStatus(`Ready (${links.length} configs)`);
+            setBadge('active', '✅ Active');
+            return;
+        }
+        
+        throw new Error('No links returned from API');
+        
+    } catch (error) {
+        console.warn('API failed, using fallback:', error.message);
+        setStatus('API failed, using fallback...');
+        setBadge('loading', '⏳ Fallback');
+        
+        // Fallback: استفاده از داده‌های محلی
         if (client) {
+            const link = buildVLESS(client.uuid, client.email);
             document.getElementById('userTitle').textContent = client.email;
             document.getElementById('infoEmail').textContent = client.email;
             document.getElementById('infoUUID').textContent = client.uuid;
             document.getElementById('infoAddress').textContent = `${ADDRESS}:${PORT}`;
+            renderLinks([link]);
+            setStatus(`Ready (${client.email}) - Fallback`);
+            setBadge('active', '✅ Active');
+        } else {
+            setStatus(`Client not found: ${id}`);
+            setBadge('error', '❌ Not Found');
+            document.getElementById('userTitle').textContent = 'Not Found';
+            document.getElementById('configsList').innerHTML = '';
+            document.getElementById('emptyMsg').classList.remove('hidden');
         }
-        
-        return true;
-    } catch (error) {
-        console.error('API Error:', error);
-        setStatus('Failed: ' + error.message);
-        setBadge('error', '❌ Failed');
-        return false;
     }
-}
-
-// ====== فرمت بایت ======
-function formatBytes(bytes) {
-    if (!bytes || bytes < 0) return '0 B';
-    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-    let i = 0;
-    let v = bytes;
-    while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
-    return v.toFixed(v >= 10 ? 0 : 1) + ' ' + units[i];
 }
 
 // ====== کپی همه ======
@@ -439,51 +524,11 @@ document.getElementById('copyAllBtn').addEventListener('click', function() {
         }
     }
     
-    // اگر id=all بود، همه کلاینت‌ها را نمایش بده
-    if (id === 'all' || id === 'ALL') {
-        const links = CLIENTS.map(c => getVLESSLink(c.uuid, c.email));
-        document.getElementById('userTitle').textContent = `All Clients (${CLIENTS.length})`;
-        document.getElementById('infoEmail').textContent = 'Multiple';
-        document.getElementById('infoUUID').textContent = '-';
-        document.getElementById('infoAddress').textContent = `${ADDRESS}:${PORT}`;
-        setStatus(`Showing ${CLIENTS.length} configs`);
-        setBadge('active', `✅ ${CLIENTS.length} Configs`);
-        renderEntries(links);
-        return;
+    if (!id) {
+        id = 'opukizbfvt3semro';
     }
     
-    // پیدا کردن کلاینت
-    const client = CLIENTS.find(c => c.id === id || c.email === id);
-    
-    if (!client) {
-        setStatus('Invalid subscription ID');
-        setBadge('error', '❌ Invalid');
-        document.getElementById('userTitle').textContent = 'Not Found';
-        document.getElementById('configsList').innerHTML = '';
-        document.getElementById('emptyMsg').classList.remove('hidden');
-        return;
-    }
-    
-    // تلاش با API پنل
-    const success = await loadFromAPI(client.email);
-    
-    // اگر API کار نکرد، از حالت fallback استفاده کن
-    if (!success) {
-        setStatus('Using fallback mode...');
-        setBadge('loading', '⏳ Fallback');
-        
-        const link = getVLESSLink(client.uuid, client.email);
-        const links = [link];
-        
-        document.getElementById('userTitle').textContent = client.email;
-        document.getElementById('infoEmail').textContent = client.email;
-        document.getElementById('infoUUID').textContent = client.uuid;
-        document.getElementById('infoAddress').textContent = `${ADDRESS}:${PORT}`;
-        
-        renderEntries(links);
-        setStatus(`Ready (${client.email}) - Fallback`);
-        setBadge('active', '✅ Active');
-    }
+    await loadSubscription(id);
 })();
 </script>
 </body>
