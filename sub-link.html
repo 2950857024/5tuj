@@ -142,17 +142,6 @@
     .info-row:last-child { border-bottom: none; }
     .info-label { color: #8b949e; }
     .info-value { color: #e5e7eb; font-family: 'Fira Code', monospace; font-size: 12px; }
-    .proto-row {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        font-size: 12px;
-        margin-bottom: 8px;
-    }
-    .proto-name { width: 80px; font-weight: 600; font-family: 'Fira Code', monospace; }
-    .proto-track { flex: 1; height: 6px; background: #1a202c; border-radius: 999px; overflow: hidden; }
-    .proto-fill { height: 100%; border-radius: 999px; }
-    .proto-count { font-family: 'Fira Code', monospace; color: #64748b; width: 24px; text-align: right; }
 </style>
 </head>
 <body>
@@ -216,51 +205,20 @@
 </div>
 
 <script>
-// ====== لیست کامل همه کلاینت‌ها ======
-const ALL_CLIENTS = [
-    {
-        id: 'fqnpgcsvvuksjv3k',
-        email: 'adweypu67d',
-        uuid: '861c4ead-11d8-43ef-9f19-405408e7a915',
-        address: '5tuj-production.up.railway.app',
-        port: '8080',
-        path: '/',
-        host: '5tuj-production.up.railway.app',
-        password: 'bv22qzu3g0e97y1l',
-        auth: 'bovm4dszwhlpzkcd'
-    },
-    {
-        id: 'txctcczehekbjlkq',
-        email: '2i26ggip4n',
-        uuid: '91ee0eab-6f58-4841-9421-138a27f7d00b',
-        address: '5tuj-production.up.railway.app',
-        port: '8080',
-        path: '/',
-        host: '5tuj-production.up.railway.app'
-    },
-    {
-        id: 'ufa7zpn9',
-        email: 'ufa7zpn9',
-        uuid: 'bbf1d118-aecd-408a-94fa-717cc6746aff',
-        address: '5tuj-production.up.railway.app',
-        port: '8080',
-        path: '/',
-        host: '5tuj-production.up.railway.app'
-    },
-    {
-        id: 'z7k8oqou',
-        email: 'z7k8oqou',
-        uuid: '5d88e790-a966-4a50-a34d-90acb6129313',
-        address: '5tuj-production.up.railway.app',
-        port: '8080',
-        path: '/',
-        host: '5tuj-production.up.railway.app'
-    }
+// ====== لیست کلاینت‌ها ======
+const CLIENTS = [
+    { id: 'fqnpgcsvvuksjv3k', email: 'adweypu67d', uuid: '861c4ead-11d8-43ef-9f19-405408e7a915' },
+    { id: 'txctcczehekbjlkq', email: '2i26ggip4n', uuid: '91ee0eab-6f58-4841-9421-138a27f7d00b' },
+    { id: 'ufa7zpn9', email: 'ufa7zpn9', uuid: 'bbf1d118-aecd-408a-94fa-717cc6746aff' },
+    { id: 'z7k8oqou', email: 'z7k8oqou', uuid: '5d88e790-a966-4a50-a34d-90acb6129313' }
 ];
 
+const ADDRESS = '5tuj-production.up.railway.app';
+const PORT = '8080';
+
 // ====== ساخت لینک VLESS ======
-function getVLESSLink(config) {
-    return `vless://${config.uuid}@${config.address}:${config.port}?encryption=none&security=none&type=ws&host=${config.host}&path=${config.path}#${config.email}`;
+function getVLESSLink(uuid, email) {
+    return `vless://${uuid}@${ADDRESS}:${PORT}?encryption=none&security=none&type=ws&host=${ADDRESS}&path=/#${email}`;
 }
 
 // ====== تشخیص پروتکل ======
@@ -269,16 +227,6 @@ function detectProtocol(uri) {
     if (uri.startsWith('vmess://')) return { key: 'vmess', label: 'VMESS', icon: 'fa-shuffle', color: '#a78bfa' };
     if (uri.startsWith('trojan://')) return { key: 'trojan', label: 'TROJAN', icon: 'fa-mask', color: '#ec4899' };
     return { key: 'other', label: 'UNKNOWN', icon: 'fa-link', color: '#8b949e' };
-}
-
-// ====== یافتن کلاینت با شناسه ======
-function findClient(id) {
-    return ALL_CLIENTS.find(c => c.id === id || c.email === id);
-}
-
-// ====== یافتن کلاینت‌های با شناسه‌های خاص ======
-function findClients(ids) {
-    return ALL_CLIENTS.filter(c => ids.includes(c.id) || ids.includes(c.email));
 }
 
 // ====== Toast ======
@@ -305,7 +253,7 @@ function setStatus(text) {
 }
 
 // ====== نمایش ======
-function renderEntries(links, clients) {
+function renderEntries(links) {
     const list = document.getElementById('configsList');
     const countBadge = document.getElementById('countBadge');
     const emptyMsg = document.getElementById('emptyMsg');
@@ -359,62 +307,111 @@ function renderEntries(links, clients) {
     });
 }
 
-// ====== لود کردن ======
-function loadSubscription(id) {
-    // اگر id = all باشد، همه کلاینت‌ها را نمایش بده
-    if (id === 'all' || id === 'ALL') {
-        const links = ALL_CLIENTS.map(c => getVLESSLink(c));
-        document.getElementById('userTitle').textContent = `All Clients (${ALL_CLIENTS.length})`;
-        document.getElementById('infoEmail').textContent = 'Multiple';
-        document.getElementById('infoUUID').textContent = '-';
-        document.getElementById('infoAddress').textContent = '5tuj-production.up.railway.app:8080';
-        document.getElementById('infoStatus').textContent = '● Active';
-        document.getElementById('infoStatus').style.color = '#6ee7b7';
-        setStatus(`Showing ${ALL_CLIENTS.length} configs`);
-        setBadge('active', `✅ ${ALL_CLIENTS.length} Configs`);
-        renderEntries(links, ALL_CLIENTS);
-        return;
+// ====== دریافت از API پنل ======
+async function loadFromAPI(emailOrId) {
+    try {
+        setStatus('Connecting to panel API...');
+        setBadge('loading', '⏳ Connecting');
+        
+        // لاگین به پنل
+        const loginRes = await fetch('/mikaeel/panel/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: 'admin',
+                password: 'admin'
+            })
+        });
+        
+        if (!loginRes.ok) {
+            throw new Error('Login failed: ' + loginRes.status);
+        }
+        
+        setStatus('Fetching configs...');
+        setBadge('loading', '⏳ Fetching');
+        
+        // دریافت لینک‌ها با API
+        const linksRes = await fetch(`/mikaeel/panel/api/clients/links/${emailOrId}`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+        
+        if (!linksRes.ok) {
+            if (linksRes.status === 404) {
+                throw new Error(`Client "${emailOrId}" not found`);
+            }
+            throw new Error(`API error: ${linksRes.status}`);
+        }
+        
+        const links = await linksRes.json();
+        console.log('Links from API:', links);
+        
+        if (!links || links.length === 0) {
+            throw new Error('No links found for this client');
+        }
+        
+        // دریافت اطلاعات ترافیک
+        try {
+            const trafficRes = await fetch(`/mikaeel/panel/api/clients/traffic/${emailOrId}`, {
+                method: 'GET',
+                credentials: 'include'
+            });
+            if (trafficRes.ok) {
+                const traffic = await trafficRes.json();
+                if (traffic && traffic.total) {
+                    const used = (traffic.up || 0) + (traffic.down || 0);
+                    const total = traffic.total || 0;
+                    const pct = total > 0 ? Math.min(100, (used/total)*100) : 0;
+                    
+                    document.getElementById('usageSection').classList.remove('hidden');
+                    document.getElementById('usageFill').style.width = pct + '%';
+                    document.getElementById('usageText').innerHTML = 
+                        `${formatBytes(used)} <span style="font-size:12px;color:#8b949e;font-weight:400;">of ${formatBytes(total)}</span>`;
+                    
+                    if (traffic.expiryTime) {
+                        const expire = traffic.expiryTime;
+                        const now = Date.now();
+                        const days = Math.max(0, Math.ceil((expire - now) / 86400000));
+                        document.getElementById('expireDate').textContent = new Date(expire).toLocaleDateString();
+                        document.getElementById('daysLeft').textContent = days + ' days';
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('Traffic info not available:', e);
+        }
+        
+        window.__rawLinks = links;
+        renderEntries(links);
+        setStatus(`Ready (${emailOrId})`);
+        setBadge('active', '✅ Active');
+        
+        // بروزرسانی اطلاعات کلاینت
+        const client = CLIENTS.find(c => c.email === emailOrId || c.id === emailOrId);
+        if (client) {
+            document.getElementById('userTitle').textContent = client.email;
+            document.getElementById('infoEmail').textContent = client.email;
+            document.getElementById('infoUUID').textContent = client.uuid;
+            document.getElementById('infoAddress').textContent = `${ADDRESS}:${PORT}`;
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('API Error:', error);
+        setStatus('Failed: ' + error.message);
+        setBadge('error', '❌ Failed');
+        return false;
     }
-    
-    // پیدا کردن کلاینت
-    const client = findClient(id);
-    
-    if (!client) {
-        setStatus('Invalid subscription ID');
-        setBadge('error', '❌ Invalid');
-        document.getElementById('configsList').innerHTML = '';
-        document.getElementById('emptyMsg').classList.remove('hidden');
-        document.getElementById('infoEmail').textContent = '-';
-        document.getElementById('infoUUID').textContent = '-';
-        document.getElementById('infoAddress').textContent = '-';
-        document.getElementById('userTitle').textContent = 'Not Found';
-        return;
-    }
-    
-    setStatus(`Loading ${client.email}...`);
-    setBadge('loading', '⏳ Loading');
-    
-    // آپدیت اطلاعات
-    document.getElementById('userTitle').textContent = client.email;
-    document.getElementById('infoEmail').textContent = client.email;
-    document.getElementById('infoUUID').textContent = client.uuid;
-    document.getElementById('infoAddress').textContent = `${client.address}:${client.port}`;
-    document.getElementById('infoStatus').textContent = '● Enabled';
-    document.getElementById('infoStatus').style.color = '#6ee7b7';
-    
-    const link = getVLESSLink(client);
-    const links = [link];
-    
-    renderEntries(links, [client]);
-    setStatus(`Ready (${client.email})`);
-    setBadge('active', '✅ Active');
-    
-    // Usage
-    document.getElementById('usageSection').classList.remove('hidden');
-    document.getElementById('usageText').innerHTML = '0 B <span style="font-size:12px;color:#8b949e;font-weight:400;">of unlimited</span>';
-    document.getElementById('usageFill').style.width = '0%';
-    document.getElementById('expireDate').textContent = 'Unlimited';
-    document.getElementById('daysLeft').textContent = 'Unlimited';
+}
+
+// ====== فرمت بایت ======
+function formatBytes(bytes) {
+    if (!bytes || bytes < 0) return '0 B';
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    let i = 0;
+    let v = bytes;
+    while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
+    return v.toFixed(v >= 10 ? 0 : 1) + ' ' + units[i];
 }
 
 // ====== کپی همه ======
@@ -429,7 +426,7 @@ document.getElementById('copyAllBtn').addEventListener('click', function() {
 });
 
 // ====== شروع ======
-(function() {
+(async function() {
     const params = new URLSearchParams(window.location.search);
     let id = params.get('id') || params.get('email');
     
@@ -442,11 +439,51 @@ document.getElementById('copyAllBtn').addEventListener('click', function() {
         }
     }
     
-    if (!id) {
-        id = 'fqnpgcsvvuksjv3k';
+    // اگر id=all بود، همه کلاینت‌ها را نمایش بده
+    if (id === 'all' || id === 'ALL') {
+        const links = CLIENTS.map(c => getVLESSLink(c.uuid, c.email));
+        document.getElementById('userTitle').textContent = `All Clients (${CLIENTS.length})`;
+        document.getElementById('infoEmail').textContent = 'Multiple';
+        document.getElementById('infoUUID').textContent = '-';
+        document.getElementById('infoAddress').textContent = `${ADDRESS}:${PORT}`;
+        setStatus(`Showing ${CLIENTS.length} configs`);
+        setBadge('active', `✅ ${CLIENTS.length} Configs`);
+        renderEntries(links);
+        return;
     }
     
-    loadSubscription(id);
+    // پیدا کردن کلاینت
+    const client = CLIENTS.find(c => c.id === id || c.email === id);
+    
+    if (!client) {
+        setStatus('Invalid subscription ID');
+        setBadge('error', '❌ Invalid');
+        document.getElementById('userTitle').textContent = 'Not Found';
+        document.getElementById('configsList').innerHTML = '';
+        document.getElementById('emptyMsg').classList.remove('hidden');
+        return;
+    }
+    
+    // تلاش با API پنل
+    const success = await loadFromAPI(client.email);
+    
+    // اگر API کار نکرد، از حالت fallback استفاده کن
+    if (!success) {
+        setStatus('Using fallback mode...');
+        setBadge('loading', '⏳ Fallback');
+        
+        const link = getVLESSLink(client.uuid, client.email);
+        const links = [link];
+        
+        document.getElementById('userTitle').textContent = client.email;
+        document.getElementById('infoEmail').textContent = client.email;
+        document.getElementById('infoUUID').textContent = client.uuid;
+        document.getElementById('infoAddress').textContent = `${ADDRESS}:${PORT}`;
+        
+        renderEntries(links);
+        setStatus(`Ready (${client.email}) - Fallback`);
+        setBadge('active', '✅ Active');
+    }
 })();
 </script>
 </body>
