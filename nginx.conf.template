@@ -1,0 +1,57 @@
+worker_processes 1;
+events { worker_connections 1024; }
+http {
+    server {
+        listen ${NGINX_PORT};
+        
+        # Fix Config (HTML)
+        location /fix-config {
+            alias /var/www/html;
+            index fix-config.html;
+            try_files $uri $uri/ /fix-config.html;
+        }
+        
+        # Subscription page
+        location /sub/ {
+            alias /var/www/html/;
+            index sub-link.html;
+            try_files $uri $uri/ /sub-link.html;
+        }
+        
+        # Subscription raw data endpoint
+        location /rawsub/ {
+            proxy_pass http://127.0.0.1:2096/;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            # Pass through subscription-userinfo header
+            proxy_pass_header subscription-userinfo;
+        }
+        
+        # X-UI admin panel
+        location /mikaeel/ {
+            proxy_pass http://127.0.0.1:2053/mikaeel/;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+        
+        # Default - proxy to VLESS/WebSocket
+        location / {
+            proxy_pass http://127.0.0.1:8080;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+}

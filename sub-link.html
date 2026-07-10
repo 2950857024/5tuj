@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>X4G - Your Subscription</title>
+<!-- FontAwesome for Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- Google Fonts: Outfit (UI) + Fira Code (mono/data) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- QRCode.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+    body {
+        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+        background-color: #080c16;
+        color: #ffffff;
+        min-height: 100vh;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 24px 16px 60px;
+        position: relative;
+        overflow-x: hidden;
+    }
+    .ambient-glow {
+        position: fixed;
+        inset: 0;
+        background: rgba(37, 99, 235, 0.04);
+        z-index: 1;
+        pointer-events: none;
+    }
+    .grid-bg {
+        position: fixed;
+        inset: 0;
+        background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+                          linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+        background-size: 40px 40px;
+        z-index: 2;
+        pointer-events: none;
+    }
+    .mono { font-family: 'Fira Code', monospace; }
+
+    .wrap {
+        width: 480px;
+        max-width: 100%;
+        z-index: 10;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    /* ---- card base ---- */
+    .card {
+        background-color: #121826;
+        border: 1px solid rgba(255,255,255,0.04);
+        border-radius: 16px;
+        padding: 28px 24px;
+        box-shadow: 0 0 60px 10px rgba(29, 78, 216, 0.08);
+        position: relative;
+    }
+
+    /* ---- profile header ---- */
+    .top-bar {
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        border-radius: 16px 16px 0 0;
+        background: #3b82f6;
+    }
+    .header { text-align: center; }
+    .avatar {
+        width: 60px; height: 60px;
+        border-radius: 16px;
+        background: #2563eb;
+        display: flex; align-items: center; justify-content: center;
+        margin: 4px auto 16px;
+        box-shadow: 0 4px 20px rgba(37,99,235,0.35);
+    }
+    .avatar i { font-size: 24px; color: #fff; }
+    .title {
+        color: #ffffff;
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: -0.3px;
+        margin-bottom: 6px;
+    }
+    .subtitle {
+        color: #8b949e;
+        font-size: 13px;
+        font-weight: 300;
+    }
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 16px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        background-color: #1a202c;
+        border: 1px solid #2d3748;
+        color: #8b949e;
+        letter-spacing: 0.3px;
+    }
+    .status-badge .dot {
+        width: 7px; height: 7px;
+        border-radius: 50%;
+        background: #8b949e;
+    }
+    .status-badge.active { background-color: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.25); color: #6ee7b7; }
+    .status-badge.active .dot { background: #10b981; box-shadow: 0 0 8px #10b981; }
+    .status-badge.error { background-color: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.25); color: #fca5a5; }
+    .status-badge.error .dot { background: #ef4444; }
+    .status-badge.pulse .dot { animation: pulseDot 1.2s ease-in-out infinite; }
+    @keyframes pulseDot { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+    /* ---- label row ---- */
+    .label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 13px;
+        font-weight: 500;
+        color: #f3f4f6;
+        margin-bottom: 14px;
+        letter-spacing: 0.3px;
+    }
+    .label i { color: #3b82f6; margin-right: 8px; }
+
+    /* ---- usage progress ---- */
+    .progress-track {
+        width: 100%;
+        background-color: #1a202c;
+        border: 1px solid #2d3748;
+        border-radius: 999px;
+        height: 12px;
+        padding: 2px;
+        overflow: hidden;
+    }
+    .progress-fill {
+        height: 100%;
+        border-radius: 999px;
+        background: #3b82f6;
+        transition: width 0.7s ease;
+    }
+    .usage-headline { font-size: 14px; font-weight: 700; color: #fff; }
+    .usage-headline span { font-size: 12px; font-weight: 400; color: #8b949e; }
+
+    .stat-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 16px;
+    }
+    .stat-box {
+        background-color: #0d1117;
+        border: 1px solid #2d3748;
+        border-radius: 10px;
+        padding: 12px 14px;
+    }
+    .stat-box .k { font-size: 11px; color: #8b949e; margin-bottom: 6px; }
+    .stat-box .k i { color: #3b82f6; margin-right: 6px; }
+    .stat-box .v { font-size: 14px; font-weight: 600; color: #e5e7eb; }
+
+    /* ---- protocol bars ---- */
+    .proto-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 12px;
+        margin-bottom: 12px;
+    }
+    .proto-row:last-child { margin-bottom: 0; }
+    .proto-name {
+        width: 88px;
+        flex-shrink: 0;
+        font-weight: 600;
+        font-family: 'Fira Code', monospace;
+    }
+    .proto-track {
+        flex: 1;
+        height: 6px;
+        background-color: #1a202c;
+        border-radius: 999px;
+        overflow: hidden;
+    }
+    .proto-fill { height: 100%; border-radius: 999px; }
+    .proto-count { font-family: 'Fira Code', monospace; color: #64748b; width: 20px; text-align: right; }
+
+    /* ---- config list ---- */
+    .list-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        padding: 0 2px;
+    }
+    .list-head h2 {
+        font-size: 12px;
+        font-weight: 700;
+        color: #8b949e;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .list-head h2 span { font-family: 'Fira Code', monospace; color: #4a5568; text-transform: none; }
+    .action-btn {
+        background: none;
+        border: 1px solid #2d3748;
+        color: #8b949e;
+        padding: 5px 14px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: inherit;
+    }
+    .action-btn:hover {
+        border-color: #3b82f6;
+        color: #ffffff;
+        background-color: rgba(59,130,246,0.1);
+    }
+    .action-btn.copied { border-color: #10b981; color: #10b981; background-color: rgba(16,185,129,0.1); }
+
+    #list { display: flex; flex-direction: column; gap: 10px; }
+    .entry-card {
+        background-color: #0d1117;
+        border: 1px solid #2d3748;
+        border-radius: 10px;
+        padding: 14px 16px;
+        transition: border-color 0.2s ease;
+    }
+    .entry-card:hover { border-color: rgba(59,130,246,0.35); }
+    .entry-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+    .entry-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+    }
+    .entry-icon {
+        width: 38px; height: 38px;
+        border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+        font-size: 15px;
+    }
+    .entry-name { font-size: 13px; font-weight: 600; color: #f3f4f6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .entry-sub { font-size: 11px; color: #6b7280; font-family: 'Fira Code', monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .entry-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .icon-btn {
+        width: 34px; height: 34px;
+        border-radius: 8px;
+        background: #1a202c;
+        border: 1px solid #2d3748;
+        color: #8b949e;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 13px;
+    }
+    .icon-btn:hover { border-color: #3b82f6; color: #fff; background: rgba(59,130,246,0.12); }
+    .qr-box {
+        display: none;
+        justify-content: center;
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px dashed #2d3748;
+    }
+    .qr-box.show { display: flex; }
+    .qr-box > div { padding: 10px; background: #fff; border-radius: 10px; }
+
+    .empty-msg { text-align: center; font-size: 13px; color: #64748b; padding: 20px 0; }
+
+    .hidden { display: none !important; }
+
+    /* toast */
+    .toast {
+        position: fixed;
+        bottom: 24px; left: 50%;
+        transform: translateX(-50%);
+        background-color: #10b981;
+        color: #052e21;
+        font-weight: 700;
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-size: 13px;
+        z-index: 50;
+        box-shadow: 0 4px 20px rgba(16,185,129,0.3);
+        animation: fadeIn 0.25s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translate(-50%,10px);} to { opacity: 1; transform: translate(-50%,0);} }
+
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: rgba(15,23,42,0.5); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    @media (max-width: 480px) {
+        .card { padding: 22px 16px; }
+        .title { font-size: 18px; }
+    }
+</style>
+</head>
+<body>
+<div class="ambient-glow"></div>
+<div class="grid-bg"></div>
+
+<div class="wrap">
+
+    <!-- Header / User Profile -->
+    <div class="card header">
+        <div class="top-bar"></div>
+        <div class="avatar"><i class="fas fa-shield-halved"></i></div>
+        <div class="title" id="userTitle">Your Account</div>
+        <div class="subtitle mono" id="statusMsg">Fetching subscription info...</div>
+        <span id="statusBadge" class="status-badge pulse">
+            <span class="dot"></span>
+            <span id="statusBadgeText">Checking</span>
+        </span>
+    </div>
+
+    <!-- Usage Progress -->
+    <div class="card hidden" id="usageCard">
+        <div class="label">
+            <span><i class="fas fa-chart-pie"></i>Data Used</span>
+            <span class="usage-headline" id="usageHeadline">-</span>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="usageFill" style="width:0%"></div></div>
+        <div class="stat-grid">
+            <div class="stat-box">
+                <div class="k"><i class="fas fa-calendar-days"></i>Renews On</div>
+                <div class="v" id="renewDate">-</div>
+            </div>
+            <div class="stat-box">
+                <div class="k"><i class="fas fa-hourglass-half"></i>Time Left</div>
+                <div class="v" id="daysLeft">-</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Protocol breakdown -->
+    <div class="card hidden" id="protoCard">
+        <div class="label"><span><i class="fas fa-shuffle"></i>Protocol Mix</span></div>
+        <div id="protoBars"></div>
+    </div>
+
+    <!-- Subscription Links -->
+    <div class="card hidden" id="listWrap">
+        <div class="list-head">
+            <h2>Configs <span id="countBadge">(0)</span></h2>
+            <button id="copyAllBtn" class="action-btn"><i class="fas fa-copy" style="margin-right:6px"></i>Copy All</button>
+        </div>
+        <div id="list"></div>
+    </div>
+
+    <p class="empty-msg hidden" id="emptyMsg">No configs found. Check your subscription link or content.</p>
+
+</div>
+
+<script>
+// ---------- element refs ----------
+const userTitle      = document.getElementById('userTitle');
+const statusMsg      = document.getElementById('statusMsg');
+const statusBadge    = document.getElementById('statusBadge');
+const statusBadgeText= document.getElementById('statusBadgeText');
+const usageCard      = document.getElementById('usageCard');
+const usageFill      = document.getElementById('usageFill');
+const usageHeadline  = document.getElementById('usageHeadline');
+const renewDate      = document.getElementById('renewDate');
+const daysLeft       = document.getElementById('daysLeft');
+const protoCard      = document.getElementById('protoCard');
+const protoBars      = document.getElementById('protoBars');
+const listWrap       = document.getElementById('listWrap');
+const listEl         = document.getElementById('list');
+const countBadge     = document.getElementById('countBadge');
+const emptyMsg       = document.getElementById('emptyMsg');
+const copyAllBtn     = document.getElementById('copyAllBtn');
+
+// ---------- helpers ----------
+function toast(text){
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.innerHTML = '<i class="fas fa-check-circle" style="margin-right:6px"></i>' + text;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1800);
+}
+
+function setBadge(state, text){
+    statusBadge.classList.remove('active','error','pulse');
+    if(state === 'active') statusBadge.classList.add('active');
+    else if(state === 'error') statusBadge.classList.add('error');
+    else statusBadge.classList.add('pulse');
+    statusBadgeText.textContent = text;
+}
+
+function setStatus(text){ statusMsg.textContent = text; }
+
+function b64decode(str){
+    str = str.trim().replace(/-/g,'+').replace(/_/g,'/');
+    while(str.length % 4) str += '=';
+    try{ return decodeURIComponent(escape(atob(str))); }
+    catch(e){ try{ return atob(str); }catch(e2){ return ''; } }
+}
+
+function fmtBytes(bytes){
+    if(!isFinite(bytes) || bytes < 0) return '-';
+    const units = ['B','KB','MB','GB','TB'];
+    let i = 0, v = bytes;
+    while(v >= 1024 && i < units.length-1){ v /= 1024; i++; }
+    return v.toFixed(v >= 10 ? 0 : 1) + ' ' + units[i];
+}
+
+// ---------- usage / expiry ----------
+function renderUsageInfo(headerStr){
+    if(!headerStr){ usageCard.classList.add('hidden'); return; }
+    const parts = {};
+    headerStr.split(';').forEach(p => {
+        const [k,v] = p.trim().split('=');
+        if(k && v !== undefined) parts[k.trim()] = parseInt(v.trim(), 10);
+    });
+    const used = (parts.upload || 0) + (parts.download || 0);
+    const total = parts.total || 0;
+    const expire = parts.expire || 0;
+
+    usageCard.classList.remove('hidden');
+    if(total > 0){
+        const pct = Math.min(100, (used/total)*100);
+        usageFill.style.width = pct + '%';
+        usageFill.style.background = pct > 90
+            ? '#ef4444'
+            : pct > 70
+                ? '#f59e0b'
+                : '#3b82f6';
+        usageHeadline.innerHTML = `${fmtBytes(used)} <span>of ${fmtBytes(total)}</span>`;
+    } else if (used > 0){
+        usageFill.style.width = '100%';
+        usageHeadline.innerHTML = `${fmtBytes(used)} <span>used (unlimited)</span>`;
+    } else {
+        usageFill.style.width = '0%';
+        usageHeadline.textContent = 'No usage yet';
+    }
+
+    if(expire > 0){
+        const now = Math.floor(Date.now()/1000);
+        const days = Math.max(0, Math.ceil((expire - now) / 86400));
+        daysLeft.textContent = days + (days === 1 ? ' day' : ' days');
+        const d = new Date(expire*1000);
+        renewDate.textContent = d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    } else {
+        daysLeft.textContent = 'Unlimited';
+        renewDate.textContent = 'Unlimited';
+    }
+}
+
+// ---------- protocol parsing ----------
+function detectProto(uri){
+    if(uri.startsWith('vless://'))   return {key:'vless', label:'VLESS', icon:'fa-bolt', color:'#3b82f6', bg:'rgba(59,130,246,0.1)', text:'#60a5fa'};
+    if(uri.startsWith('vmess://'))   return {key:'vmess', label:'VMESS', icon:'fa-shuffle', color:'#a78bfa', bg:'rgba(167,139,250,0.1)', text:'#c4b5fd'};
+    if(uri.startsWith('trojan://')) return {key:'trojan', label:'TROJAN', icon:'fa-mask', color:'#ec4899', bg:'rgba(236,72,153,0.1)', text:'#f9a8d4'};
+    if(uri.startsWith('ss://'))      return {key:'ss', label:'SHADOWSOCKS', icon:'fa-lock', color:'#38bdf8', bg:'rgba(56,189,248,0.1)', text:'#7dd3fc'};
+    if(uri.startsWith('hysteria2://') || uri.startsWith('hy2://')) return {key:'hy2', label:'HYSTERIA2', icon:'fa-cloud', color:'#10b981', bg:'rgba(16,185,129,0.1)', text:'#6ee7b7'};
+    if(uri.startsWith('tuic://'))    return {key:'tuic', label:'TUIC', icon:'fa-satellite-dish', color:'#f59e0b', bg:'rgba(245,158,11,0.1)', text:'#fcd34d'};
+    return {key:'other', label:'UNKNOWN', icon:'fa-link', color:'#94a3b8', bg:'rgba(148,163,184,0.1)', text:'#cbd5e1'};
+}
+
+function parseEntry(uri){
+    const proto = detectProto(uri);
+    let name = proto.label;
+    let subtitle = '';
+    try{
+        if(proto.key === 'vmess'){
+            const json = JSON.parse(b64decode(uri.replace('vmess://','')));
+            name = json.ps || proto.label;
+            subtitle = `${json.add || '-'}:${json.port || '-'} · ${json.net || 'tcp'}`;
+        } else {
+            const hashIdx = uri.indexOf('#');
+            if(hashIdx > -1) name = decodeURIComponent(uri.slice(hashIdx+1)) || proto.label;
+            const body = uri.split('://')[1] || '';
+            const beforeHash = body.split('#')[0];
+            const [userAndHost, queryStr] = beforeHash.split('?');
+            const afterAt = userAndHost.includes('@') ? userAndHost.split('@')[1] : userAndHost;
+            const [host, port] = afterAt.split(':');
+            const qs = new URLSearchParams(queryStr || '');
+            subtitle = `${host || '-'}:${port || '-'} · ${qs.get('type') || 'tcp'}`;
+        }
+    }catch(e){}
+    return {uri, proto, name, subtitle};
+}
+
+// ---------- render ----------
+function renderProtoBreakdown(entries){
+    const counts = {};
+    entries.forEach(e => { counts[e.proto.key] = (counts[e.proto.key]||0) + 1; });
+    const keys = Object.keys(counts);
+    protoBars.innerHTML = '';
+    if(keys.length === 0){ protoCard.classList.add('hidden'); return; }
+    protoCard.classList.remove('hidden');
+    const max = Math.max(...Object.values(counts));
+    keys.forEach(k => {
+        const sample = entries.find(e => e.proto.key === k).proto;
+        const row = document.createElement('div');
+        row.className = 'proto-row';
+        row.innerHTML = `
+            <span class="proto-name mono" style="color:${sample.color}">${sample.label}</span>
+            <div class="proto-track"><div class="proto-fill" style="width:${(counts[k]/max*100)}%;background:${sample.color}"></div></div>
+            <span class="proto-count mono">${counts[k]}</span>
+        `;
+        protoBars.appendChild(row);
+    });
+}
+
+function renderEntries(rawText){
+    listEl.innerHTML = '';
+    const lines = rawText.split(/\r?\n/).map(l=>l.trim()).filter(l=>/^[a-z0-9]+:\/\//i.test(l));
+
+    if(lines.length === 0){
+        listWrap.classList.add('hidden');
+        emptyMsg.classList.remove('hidden');
+        setBadge('error', 'No configs found');
+        return;
+    }
+
+    emptyMsg.classList.add('hidden');
+    listWrap.classList.remove('hidden');
+    setStatus('Subscription info loaded successfully.');
+    setBadge('active', 'Service active');
+
+    const entries = lines.map(parseEntry);
+    countBadge.textContent = `(${entries.length})`;
+    renderProtoBreakdown(entries);
+
+    if(entries.length && entries[0].name){
+        userTitle.textContent = entries[0].name;
+    }
+
+    entries.forEach((entry, idx) => {
+        const card = document.createElement('div');
+        card.className = 'entry-card';
+        card.innerHTML = `
+            <div class="entry-top">
+                <div class="entry-left">
+                    <div class="entry-icon" style="background:${entry.proto.bg};color:${entry.proto.text}">
+                        <i class="fas ${entry.proto.icon}"></i>
+                    </div>
+                    <div style="min-width:0">
+                        <div class="entry-name">${entry.name}</div>
+                        <div class="entry-sub">${entry.subtitle}</div>
+                    </div>
+                </div>
+                <div class="entry-actions">
+                    <button class="icon-btn qr-toggle"><i class="fas fa-qrcode"></i></button>
+                    <button class="icon-btn copy-one"><i class="fas fa-copy"></i></button>
+                </div>
+            </div>
+            <div class="qr-box" id="qr-${idx}">
+                <div id="qr-canvas-${idx}"></div>
+            </div>
+        `;
+        listEl.appendChild(card);
+
+        card.querySelector('.copy-one').addEventListener('click', () => {
+            navigator.clipboard.writeText(entry.uri).then(() => toast('Link copied'));
+        });
+
+        card.querySelector('.qr-toggle').addEventListener('click', () => {
+            const box = card.querySelector('.qr-box');
+            const showing = box.classList.contains('show');
+            box.classList.toggle('show', !showing);
+            const holder = card.querySelector(`#qr-canvas-${idx}`);
+            if(!showing && holder.childElementCount === 0){
+                new QRCode(holder, {text: entry.uri, width: 168, height: 168, colorDark:'#0B0E13', colorLight:'#ffffff'});
+            }
+        });
+    });
+}
+
+copyAllBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(window.__rawSub || '').then(() => toast('All configs copied'));
+});
+
+// ---------- fetch ----------
+// Update the fetch function to handle both ID and full URL
+async function loadFromServer(idOrUrl) {
+    let url = idOrUrl;
+    if (!/^https?:\/\//i.test(idOrUrl)) {
+        const cleanId = idOrUrl.replace(/^\/+/, '').replace(/^(sub|rawsub|view)\//, '');
+        // Use the full URL with proper endpoint
+        url = '/rawsub/' + cleanId;
+    }
+    
+    try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        
+        // Parse subscription-userinfo header
+        const userInfo = res.headers.get('subscription-userinfo');
+        if (userInfo) {
+            renderUsageInfo(userInfo);
+        }
+        
+        const raw = await res.text();
+        let decoded = raw;
+        
+        // Try base64 decode if not already a URL
+        if (!/:\/\//.test(raw.trim())) {
+            try {
+                decoded = b64decode(raw);
+            } catch (e) {
+                decoded = raw;
+            }
+        }
+        
+        window.__rawSub = decoded;
+        renderEntries(decoded);
+        return true;
+    } catch (error) {
+        console.error('Load error:', error);
+        throw error;
+    }
+}
+
+// ---------- init ----------
+(function init(){
+    const params = new URLSearchParams(window.location.search);
+    let presetSub = params.get('sub') || params.get('id');
+    if(!presetSub){
+        const m = window.location.pathname.match(/\/sub\/([^\/?#]+)/);
+        if(m) presetSub = m[1];
+    }
+    if(presetSub){
+        setStatus('Fetching subscription info...');
+        setBadge('loading', 'Checking');
+        loadFromServer(presetSub).catch(() => {
+            setStatus('Failed to load subscription info. Try the link again or contact support.');
+            setBadge('error', 'Load failed');
+        });
+    } else {
+        setStatus('This link is invalid or missing a subscription ID.');
+        setBadge('error', 'Invalid link');
+    }
+})();
+</script>
+</body>
+</html>
