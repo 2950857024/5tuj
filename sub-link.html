@@ -4,20 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>X4G - Your Subscription</title>
-<!-- FontAwesome for Icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<!-- Google Fonts: Outfit (UI) + Fira Code (mono/data) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
-<!-- QRCode.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
-    * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
         font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
         background-color: #080c16;
@@ -92,6 +85,7 @@
         color: #8b949e;
         font-size: 13px;
         font-weight: 300;
+        word-break: break-all;
     }
     .status-badge {
         display: inline-flex;
@@ -300,7 +294,6 @@
 <div class="ambient-glow"></div>
 <div class="grid-bg"></div>
 <div class="wrap">
-    <!-- Header / User Profile -->
     <div class="card header">
         <div class="top-bar"></div>
         <div class="avatar"><i class="fas fa-shield-halved"></i></div>
@@ -311,7 +304,6 @@
             <span id="statusBadgeText">Loading</span>
         </span>
     </div>
-    <!-- Usage Progress -->
     <div class="card hidden" id="usageCard">
         <div class="label">
             <span><i class="fas fa-chart-pie"></i>Data Used</span>
@@ -329,12 +321,10 @@
             </div>
         </div>
     </div>
-    <!-- Protocol breakdown -->
     <div class="card hidden" id="protoCard">
         <div class="label"><span><i class="fas fa-shuffle"></i>Protocol Mix</span></div>
         <div id="protoBars"></div>
     </div>
-    <!-- Subscription Links -->
     <div class="card hidden" id="listWrap">
         <div class="list-head">
             <h2>Configs <span id="countBadge">(0)</span></h2>
@@ -345,7 +335,7 @@
     <p class="empty-msg hidden" id="emptyMsg">No configs found. Check your subscription link or content.</p>
 </div>
 <script>
-// ---------- element refs ----------
+// ---------- Element refs ----------
 const userTitle      = document.getElementById('userTitle');
 const statusMsg      = document.getElementById('statusMsg');
 const statusBadge    = document.getElementById('statusBadge');
@@ -363,7 +353,7 @@ const countBadge     = document.getElementById('countBadge');
 const emptyMsg       = document.getElementById('emptyMsg');
 const copyAllBtn     = document.getElementById('copyAllBtn');
 
-// ---------- helpers ----------
+// ---------- Helpers ----------
 function toast(text){
     const el = document.createElement('div');
     el.className = 'toast';
@@ -390,13 +380,6 @@ function setStatus(text){
     statusMsg.textContent = text; 
 }
 
-function b64decode(str){
-    str = str.trim().replace(/-/g,'+').replace(/_/g,'/');
-    while(str.length % 4) str += '=';
-    try{ return decodeURIComponent(escape(atob(str))); }
-    catch(e){ try{ return atob(str); }catch(e2){ return ''; } }
-}
-
 function fmtBytes(bytes){
     if(!isFinite(bytes) || bytes < 0) return '-';
     const units = ['B','KB','MB','GB','TB'];
@@ -405,46 +388,7 @@ function fmtBytes(bytes){
     return v.toFixed(v >= 10 ? 0 : 1) + ' ' + units[i];
 }
 
-// ---------- usage / expiry ----------
-function renderUsageInfo(headerStr){
-    if(!headerStr){ 
-        usageCard.classList.add('hidden'); 
-        return; 
-    }
-    const parts = {};
-    headerStr.split(';').forEach(p => {
-        const [k,v] = p.trim().split('=');
-        if(k && v !== undefined) parts[k.trim()] = parseInt(v.trim(), 10);
-    });
-    const used = (parts.upload || 0) + (parts.download || 0);
-    const total = parts.total || 0;
-    const expire = parts.expire || 0;
-    usageCard.classList.remove('hidden');
-    if(total > 0){
-        const pct = Math.min(100, (used/total)*100);
-        usageFill.style.width = pct + '%';
-        usageFill.style.background = pct > 90 ? '#ef4444' : pct > 70 ? '#f59e0b' : '#3b82f6';
-        usageHeadline.innerHTML = `${fmtBytes(used)} <span>of ${fmtBytes(total)}</span>`;
-    } else if (used > 0){
-        usageFill.style.width = '100%';
-        usageHeadline.innerHTML = `${fmtBytes(used)} <span>used (unlimited)</span>`;
-    } else {
-        usageFill.style.width = '0%';
-        usageHeadline.textContent = 'No usage yet';
-    }
-    if(expire > 0){
-        const now = Math.floor(Date.now()/1000);
-        const days = Math.max(0, Math.ceil((expire - now) / 86400));
-        daysLeft.textContent = days + (days === 1 ? ' day' : ' days');
-        const d = new Date(expire*1000);
-        renewDate.textContent = d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-    } else {
-        daysLeft.textContent = 'Unlimited';
-        renewDate.textContent = 'Unlimited';
-    }
-}
-
-// ---------- protocol parsing ----------
+// ---------- Protocol detection ----------
 function detectProto(uri){
     if(uri.startsWith('vless://'))   return {key:'vless', label:'VLESS', icon:'fa-bolt', color:'#3b82f6', bg:'rgba(59,130,246,0.1)', text:'#60a5fa'};
     if(uri.startsWith('vmess://'))   return {key:'vmess', label:'VMESS', icon:'fa-shuffle', color:'#a78bfa', bg:'rgba(167,139,250,0.1)', text:'#c4b5fd'};
@@ -461,7 +405,7 @@ function parseEntry(uri){
     let subtitle = '';
     try{
         if(proto.key === 'vmess'){
-            const json = JSON.parse(b64decode(uri.replace('vmess://','')));
+            const json = JSON.parse(atob(uri.replace('vmess://','')));
             name = json.ps || proto.label;
             subtitle = `${json.add || '-'}:${json.port || '-'}  ${json.net || 'tcp'}`;
         } else {
@@ -479,7 +423,7 @@ function parseEntry(uri){
     return {uri, proto, name, subtitle};
 }
 
-// ---------- render ----------
+// ---------- Render ----------
 function renderProtoBreakdown(entries){
     const counts = {};
     entries.forEach(e => { counts[e.proto.key] = (counts[e.proto.key]||0) + 1; });
@@ -501,10 +445,9 @@ function renderProtoBreakdown(entries){
     });
 }
 
-function renderEntries(rawText){
+function renderEntries(linksArray){
     listEl.innerHTML = '';
-    const lines = rawText.split(/\r?\n/).map(l=>l.trim()).filter(l=>/^[a-z0-9]+:\/\//i.test(l));
-    if(lines.length === 0){
+    if(!linksArray || linksArray.length === 0){
         listWrap.classList.add('hidden');
         emptyMsg.classList.remove('hidden');
         setBadge('error', 'No configs found');
@@ -515,7 +458,7 @@ function renderEntries(rawText){
     listWrap.classList.remove('hidden');
     setStatus('Subscription loaded successfully');
     setBadge('active', 'Active');
-    const entries = lines.map(parseEntry);
+    const entries = linksArray.map(parseEntry);
     countBadge.textContent = `(${entries.length})`;
     renderProtoBreakdown(entries);
     if(entries.length && entries[0].name){
@@ -561,51 +504,77 @@ function renderEntries(rawText){
 }
 
 copyAllBtn.addEventListener('click', () => {
-    navigator.clipboard.writeText(window.__rawSub || '').then(() => toast('All configs copied'));
+    const allLinks = window.__rawLinks || [];
+    const text = allLinks.join('\n');
+    navigator.clipboard.writeText(text).then(() => toast('All configs copied'));
 });
 
-// ---------- fetch subscription ----------
-async function loadSubscription(subId) {
+// ---------- Main: Load from Panel API ----------
+async function loadSubscription(email) {
     try {
-        setStatus('Loading subscription...');
+        setStatus('Connecting to panel API...');
         setBadge('pulse', 'Loading');
         
-        // Try to fetch from /rawsub/ endpoint
-        const url = '/rawsub/' + subId;
-        console.log('Fetching from:', url);
+        // Step 1: Login to panel API
+        const loginRes = await fetch('/mikaeel/panel/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: 'admin',
+                password: 'admin'  // تغییر با پسورد واقعی
+            })
+        });
         
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        if (!loginRes.ok) {
+            throw new Error('Login failed: ' + loginRes.status);
         }
         
-        // Parse subscription-userinfo header
-        const userInfo = response.headers.get('subscription-userinfo');
-        if (userInfo) {
-            renderUsageInfo(userInfo);
-        } else {
-            // Set default usage info
-            renderUsageInfo('upload=0; download=0; total=107374182400; expire=0');
-        }
+        setStatus('Fetching subscription links...');
         
-        const raw = await response.text();
-        console.log('Raw response:', raw.substring(0, 100) + '...');
+        // Step 2: Get subscription links for the client
+        const subRes = await fetch(`/mikaeel/panel/api/clients/links/${email}`, {
+            method: 'GET',
+            credentials: 'include'
+        });
         
-        let decoded = raw;
-        // Try base64 decode if not already a URL
-        if (!/:\/\//.test(raw.trim())) {
-            try {
-                decoded = b64decode(raw);
-                console.log('Decoded from base64');
-            } catch (e) {
-                decoded = raw;
-                console.log('Not base64, using raw');
+        if (!subRes.ok) {
+            if (subRes.status === 404) {
+                throw new Error(`Client "${email}" not found`);
             }
+            throw new Error(`API error: ${subRes.status} - ${subRes.statusText}`);
         }
         
-        window.__rawSub = decoded;
-        renderEntries(decoded);
+        const links = await subRes.json();
+        console.log('Links from API:', links);
+        
+        // Step 3: Get client traffic info
+        try {
+            const trafficRes = await fetch(`/mikaeel/panel/api/clients/traffic/${email}`, {
+                method: 'GET',
+                credentials: 'include'
+            });
+            if (trafficRes.ok) {
+                const traffic = await trafficRes.json();
+                if (traffic) {
+                    const total = traffic.total || 0;
+                    const used = (traffic.up || 0) + (traffic.down || 0);
+                    if (total > 0) {
+                        renderUsageInfo(`upload=${traffic.up||0}; download=${traffic.down||0}; total=${total}; expire=${traffic.expiryTime||0}`);
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('Could not fetch traffic info:', e);
+        }
+        
+        if (!links || links.length === 0) {
+            throw new Error('No links found for this client');
+        }
+        
+        window.__rawLinks = links;
+        renderEntries(links);
         return true;
+        
     } catch (error) {
         console.error('Load error:', error);
         setStatus('Failed to load subscription: ' + error.message);
@@ -614,31 +583,68 @@ async function loadSubscription(subId) {
     }
 }
 
-// ---------- init ----------
+// ---------- Usage info ----------
+function renderUsageInfo(headerStr){
+    if(!headerStr){ 
+        usageCard.classList.add('hidden'); 
+        return; 
+    }
+    const parts = {};
+    headerStr.split(';').forEach(p => {
+        const [k,v] = p.trim().split('=');
+        if(k && v !== undefined) parts[k.trim()] = parseInt(v.trim(), 10);
+    });
+    const used = (parts.upload || 0) + (parts.download || 0);
+    const total = parts.total || 0;
+    const expire = parts.expire || 0;
+    usageCard.classList.remove('hidden');
+    if(total > 0){
+        const pct = Math.min(100, (used/total)*100);
+        usageFill.style.width = pct + '%';
+        usageFill.style.background = pct > 90 ? '#ef4444' : pct > 70 ? '#f59e0b' : '#3b82f6';
+        usageHeadline.innerHTML = `${fmtBytes(used)} <span>of ${fmtBytes(total)}</span>`;
+    } else if (used > 0){
+        usageFill.style.width = '100%';
+        usageHeadline.innerHTML = `${fmtBytes(used)} <span>used (unlimited)</span>`;
+    } else {
+        usageFill.style.width = '0%';
+        usageHeadline.textContent = 'No usage yet';
+    }
+    if(expire > 0){
+        const now = Math.floor(Date.now()/1000);
+        const days = Math.max(0, Math.ceil((expire - now) / 86400));
+        daysLeft.textContent = days + (days === 1 ? ' day' : ' days');
+        const d = new Date(expire*1000);
+        renewDate.textContent = d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    } else {
+        daysLeft.textContent = 'Unlimited';
+        renewDate.textContent = 'Unlimited';
+    }
+}
+
+// ---------- Init ----------
 (async function init() {
     try {
-        // Get subscription ID from URL
+        // Get email from URL
         const params = new URLSearchParams(window.location.search);
-        let subId = params.get('sub') || params.get('id');
+        let email = params.get('email') || params.get('id');
         
         // If not in query params, check path
-        if (!subId) {
+        if (!email) {
             const pathParts = window.location.pathname.split('/');
-            // Check if we're at /sub/ID or /sub-link.html?ID
             const lastPart = pathParts[pathParts.length - 1];
             if (lastPart && lastPart !== 'sub' && lastPart !== 'sub-link.html') {
-                subId = lastPart;
+                email = lastPart;
             }
         }
         
-        // If still no ID, use default test subscription
-        if (!subId) {
-            console.log('No subscription ID provided, using test subscription');
-            subId = 'test-sub';
+        // Default to the client email
+        if (!email) {
+            email = 'ufa7zpn9';  // Your client email
         }
         
-        console.log('Loading subscription ID:', subId);
-        await loadSubscription(subId);
+        console.log('Loading client:', email);
+        await loadSubscription(email);
         
     } catch (error) {
         console.error('Init error:', error);

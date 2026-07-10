@@ -8,6 +8,21 @@ http {
         listen ${NGINX_PORT};
         server_name localhost;
         
+        # Proxy to 3x-ui panel API
+        location /mikaeel/ {
+            proxy_pass http://127.0.0.1:2053/mikaeel/;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_cookie_path /mikaeel /mikaeel;
+            proxy_pass_header Set-Cookie;
+            proxy_set_header Cookie $http_cookie;
+        }
+        
         # Fix Config Tool (HTML)
         location /fix-config {
             alias /var/www/html;
@@ -22,38 +37,8 @@ http {
             try_files $uri $uri/ /sub-link.html;
         }
         
-        # Subscription Page (without trailing slash)
         location = /sub {
             return 301 /sub/;
-        }
-        
-        # Subscription raw data endpoint - serve from filesystem
-        location /rawsub/ {
-            alias /etc/x-ui/subscriptions/;
-            default_type text/plain;
-            
-            # Add CORS headers
-            add_header 'Access-Control-Allow-Origin' '*';
-            add_header 'Access-Control-Allow-Methods' 'GET, OPTIONS';
-            add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range';
-            
-            # Add subscription-userinfo header (upload=0; download=0; total=107374182400; expire=0)
-            add_header subscription-userinfo "upload=0; download=0; total=107374182400; expire=0" always;
-            
-            # Enable directory listing for debugging
-            autoindex off;
-        }
-        
-        # X-UI admin panel
-        location /mikaeel/ {
-            proxy_pass http://127.0.0.1:2053/mikaeel/;
-            proxy_http_version 1.1;
-            proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection "upgrade";
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
         }
         
         # VLESS/WebSocket proxy
