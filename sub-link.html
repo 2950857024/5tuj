@@ -103,18 +103,6 @@
         transition: all 0.2s;
     }
     .btn-icon:hover { border-color: #3b82f6; color: #fff; background: rgba(59,130,246,0.1); }
-    .btn-primary {
-        width: 100%;
-        padding: 12px;
-        background: #2563eb;
-        border: none;
-        border-radius: 10px;
-        color: #fff;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-    .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); }
     .qr-box {
         display: none;
         justify-content: center;
@@ -144,7 +132,16 @@
         from { opacity: 0; transform: translate(-50%, 20px); }
         to { opacity: 1; transform: translate(-50%, 0); }
     }
-    .protocol-bars { margin-top: 12px; }
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.04);
+        font-size: 13px;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: #8b949e; }
+    .info-value { color: #e5e7eb; font-family: 'Fira Code', monospace; font-size: 12px; }
     .proto-row {
         display: flex;
         align-items: center;
@@ -168,7 +165,26 @@
             <div class="badge loading" id="statusBadge">⏳ Loading</div>
         </div>
         
-        <div id="usageSection" class="hidden">
+        <div id="infoSection">
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-envelope" style="color:#3b82f6;"></i> Email</span>
+                <span class="info-value" id="infoEmail">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-fingerprint" style="color:#3b82f6;"></i> UUID</span>
+                <span class="info-value" id="infoUUID">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-server" style="color:#3b82f6;"></i> Address</span>
+                <span class="info-value" id="infoAddress">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-plug" style="color:#3b82f6;"></i> Status</span>
+                <span class="info-value" id="infoStatus" style="color:#6ee7b7;">● Enabled</span>
+            </div>
+        </div>
+        
+        <div id="usageSection" class="hidden" style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06);">
             <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
                 <span style="font-size:13px;font-weight:500;"><i class="fas fa-chart-pie" style="color:#3b82f6;"></i> Data Usage</span>
                 <span style="font-size:14px;font-weight:700;" id="usageText">-</span>
@@ -200,8 +216,21 @@
 </div>
 
 <script>
-const CONFIGS = {
-    'txctcczehekbjlkq': {
+// ====== لیست کامل همه کلاینت‌ها ======
+const ALL_CLIENTS = [
+    {
+        id: 'fqnpgcsvvuksjv3k',
+        email: 'adweypu67d',
+        uuid: '861c4ead-11d8-43ef-9f19-405408e7a915',
+        address: '5tuj-production.up.railway.app',
+        port: '8080',
+        path: '/',
+        host: '5tuj-production.up.railway.app',
+        password: 'bv22qzu3g0e97y1l',
+        auth: 'bovm4dszwhlpzkcd'
+    },
+    {
+        id: 'txctcczehekbjlkq',
         email: '2i26ggip4n',
         uuid: '91ee0eab-6f58-4841-9421-138a27f7d00b',
         address: '5tuj-production.up.railway.app',
@@ -209,15 +238,8 @@ const CONFIGS = {
         path: '/',
         host: '5tuj-production.up.railway.app'
     },
-    '2i26ggip4n': {
-        email: '2i26ggip4n',
-        uuid: '91ee0eab-6f58-4841-9421-138a27f7d00b',
-        address: '5tuj-production.up.railway.app',
-        port: '8080',
-        path: '/',
-        host: '5tuj-production.up.railway.app'
-    },
-    'ufa7zpn9': {
+    {
+        id: 'ufa7zpn9',
         email: 'ufa7zpn9',
         uuid: 'bbf1d118-aecd-408a-94fa-717cc6746aff',
         address: '5tuj-production.up.railway.app',
@@ -225,7 +247,8 @@ const CONFIGS = {
         path: '/',
         host: '5tuj-production.up.railway.app'
     },
-    'z7k8oqou': {
+    {
+        id: 'z7k8oqou',
         email: 'z7k8oqou',
         uuid: '5d88e790-a966-4a50-a34d-90acb6129313',
         address: '5tuj-production.up.railway.app',
@@ -233,12 +256,14 @@ const CONFIGS = {
         path: '/',
         host: '5tuj-production.up.railway.app'
     }
-};
+];
 
+// ====== ساخت لینک VLESS ======
 function getVLESSLink(config) {
     return `vless://${config.uuid}@${config.address}:${config.port}?encryption=none&security=none&type=ws&host=${config.host}&path=${config.path}#${config.email}`;
 }
 
+// ====== تشخیص پروتکل ======
 function detectProtocol(uri) {
     if (uri.startsWith('vless://')) return { key: 'vless', label: 'VLESS', icon: 'fa-bolt', color: '#3b82f6' };
     if (uri.startsWith('vmess://')) return { key: 'vmess', label: 'VMESS', icon: 'fa-shuffle', color: '#a78bfa' };
@@ -246,6 +271,17 @@ function detectProtocol(uri) {
     return { key: 'other', label: 'UNKNOWN', icon: 'fa-link', color: '#8b949e' };
 }
 
+// ====== یافتن کلاینت با شناسه ======
+function findClient(id) {
+    return ALL_CLIENTS.find(c => c.id === id || c.email === id);
+}
+
+// ====== یافتن کلاینت‌های با شناسه‌های خاص ======
+function findClients(ids) {
+    return ALL_CLIENTS.filter(c => ids.includes(c.id) || ids.includes(c.email));
+}
+
+// ====== Toast ======
 function toast(msg) {
     const el = document.createElement('div');
     el.className = 'toast';
@@ -254,6 +290,7 @@ function toast(msg) {
     setTimeout(() => el.remove(), 2000);
 }
 
+// ====== وضعیت ======
 function setBadge(state, text) {
     const badge = document.getElementById('statusBadge');
     badge.className = 'badge';
@@ -267,16 +304,8 @@ function setStatus(text) {
     document.getElementById('statusMsg').textContent = text;
 }
 
-function fmtBytes(bytes) {
-    if (!bytes || bytes < 0) return '-';
-    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-    let i = 0;
-    let v = bytes;
-    while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
-    return v.toFixed(v >= 10 ? 0 : 1) + ' ' + units[i];
-}
-
-function renderEntries(links) {
+// ====== نمایش ======
+function renderEntries(links, clients) {
     const list = document.getElementById('configsList');
     const countBadge = document.getElementById('countBadge');
     const emptyMsg = document.getElementById('emptyMsg');
@@ -292,14 +321,6 @@ function renderEntries(links) {
     emptyMsg.classList.add('hidden');
     countBadge.textContent = `(${links.length})`;
     
-    // Protocol breakdown
-    const protoCount = {};
-    links.forEach(link => {
-        const proto = detectProtocol(link);
-        protoCount[proto.key] = (protoCount[proto.key] || 0) + 1;
-    });
-    
-    // Render each entry
     links.forEach((link, idx) => {
         const proto = detectProtocol(link);
         const div = document.createElement('div');
@@ -322,12 +343,10 @@ function renderEntries(links) {
         
         list.appendChild(div);
         
-        // Copy button
         div.querySelector('.copy-btn').addEventListener('click', function() {
             navigator.clipboard.writeText(this.dataset.link).then(() => toast('Copied!'));
         });
         
-        // QR button
         div.querySelector('.qr-btn').addEventListener('click', function() {
             const box = document.getElementById(`qr-${idx}`);
             const showing = box.classList.contains('show');
@@ -340,29 +359,57 @@ function renderEntries(links) {
     });
 }
 
+// ====== لود کردن ======
 function loadSubscription(id) {
-    const config = CONFIGS[id];
+    // اگر id = all باشد، همه کلاینت‌ها را نمایش بده
+    if (id === 'all' || id === 'ALL') {
+        const links = ALL_CLIENTS.map(c => getVLESSLink(c));
+        document.getElementById('userTitle').textContent = `All Clients (${ALL_CLIENTS.length})`;
+        document.getElementById('infoEmail').textContent = 'Multiple';
+        document.getElementById('infoUUID').textContent = '-';
+        document.getElementById('infoAddress').textContent = '5tuj-production.up.railway.app:8080';
+        document.getElementById('infoStatus').textContent = '● Active';
+        document.getElementById('infoStatus').style.color = '#6ee7b7';
+        setStatus(`Showing ${ALL_CLIENTS.length} configs`);
+        setBadge('active', `✅ ${ALL_CLIENTS.length} Configs`);
+        renderEntries(links, ALL_CLIENTS);
+        return;
+    }
     
-    if (!config) {
+    // پیدا کردن کلاینت
+    const client = findClient(id);
+    
+    if (!client) {
         setStatus('Invalid subscription ID');
         setBadge('error', '❌ Invalid');
         document.getElementById('configsList').innerHTML = '';
         document.getElementById('emptyMsg').classList.remove('hidden');
+        document.getElementById('infoEmail').textContent = '-';
+        document.getElementById('infoUUID').textContent = '-';
+        document.getElementById('infoAddress').textContent = '-';
+        document.getElementById('userTitle').textContent = 'Not Found';
         return;
     }
     
-    setStatus(`Loading ${config.email}...`);
+    setStatus(`Loading ${client.email}...`);
     setBadge('loading', '⏳ Loading');
     
-    const link = getVLESSLink(config);
+    // آپدیت اطلاعات
+    document.getElementById('userTitle').textContent = client.email;
+    document.getElementById('infoEmail').textContent = client.email;
+    document.getElementById('infoUUID').textContent = client.uuid;
+    document.getElementById('infoAddress').textContent = `${client.address}:${client.port}`;
+    document.getElementById('infoStatus').textContent = '● Enabled';
+    document.getElementById('infoStatus').style.color = '#6ee7b7';
+    
+    const link = getVLESSLink(client);
     const links = [link];
     
-    document.getElementById('userTitle').textContent = config.email;
-    renderEntries(links);
-    setStatus(`Ready (${config.email})`);
+    renderEntries(links, [client]);
+    setStatus(`Ready (${client.email})`);
     setBadge('active', '✅ Active');
     
-    // Show usage
+    // Usage
     document.getElementById('usageSection').classList.remove('hidden');
     document.getElementById('usageText').innerHTML = '0 B <span style="font-size:12px;color:#8b949e;font-weight:400;">of unlimited</span>';
     document.getElementById('usageFill').style.width = '0%';
@@ -370,16 +417,18 @@ function loadSubscription(id) {
     document.getElementById('daysLeft').textContent = 'Unlimited';
 }
 
-// Copy all
+// ====== کپی همه ======
 document.getElementById('copyAllBtn').addEventListener('click', function() {
     const links = [];
     document.querySelectorAll('.copy-btn').forEach(btn => {
         links.push(btn.dataset.link);
     });
-    navigator.clipboard.writeText(links.join('\n')).then(() => toast('All configs copied!'));
+    if (links.length > 0) {
+        navigator.clipboard.writeText(links.join('\n')).then(() => toast(`${links.length} configs copied!`));
+    }
 });
 
-// Init
+// ====== شروع ======
 (function() {
     const params = new URLSearchParams(window.location.search);
     let id = params.get('id') || params.get('email');
@@ -394,7 +443,7 @@ document.getElementById('copyAllBtn').addEventListener('click', function() {
     }
     
     if (!id) {
-        id = 'txctcczehekbjlkq';
+        id = 'fqnpgcsvvuksjv3k';
     }
     
     loadSubscription(id);
