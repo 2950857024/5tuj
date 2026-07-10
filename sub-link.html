@@ -1,145 +1,66 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>X4G - Your Subscription</title>
+<title>X4G - Subscription</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
-        background-color: #080c16;
-        color: #ffffff;
+        font-family: 'Outfit', sans-serif;
+        background: #080c16;
+        color: #fff;
         min-height: 100vh;
         display: flex;
-        align-items: flex-start;
         justify-content: center;
-        padding: 24px 16px 60px;
-        position: relative;
-        overflow-x: hidden;
+        padding: 40px 20px;
     }
-    .ambient-glow {
-        position: fixed;
-        inset: 0;
-        background: rgba(37, 99, 235, 0.04);
-        z-index: 1;
-        pointer-events: none;
-    }
-    .grid-bg {
-        position: fixed;
-        inset: 0;
-        background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
-                          linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
-        background-size: 40px 40px;
-        z-index: 2;
-        pointer-events: none;
-    }
-    .mono { font-family: 'Fira Code', monospace; }
-    .wrap {
-        width: 480px;
-        max-width: 100%;
-        z-index: 10;
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        gap: 18px;
+    .container {
+        width: 100%;
+        max-width: 500px;
     }
     .card {
-        background-color: #121826;
-        border: 1px solid rgba(255,255,255,0.04);
+        background: #121826;
+        border: 1px solid rgba(255,255,255,0.06);
         border-radius: 16px;
-        padding: 28px 24px;
-        box-shadow: 0 0 60px 10px rgba(29, 78, 216, 0.08);
-        position: relative;
+        padding: 30px 24px;
+        margin-bottom: 20px;
     }
-    .top-bar {
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 3px;
-        border-radius: 16px 16px 0 0;
-        background: #3b82f6;
+    .card-header {
+        text-align: center;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        padding-bottom: 20px;
+        margin-bottom: 20px;
     }
-    .header { text-align: center; }
     .avatar {
-        width: 60px; height: 60px;
-        border-radius: 16px;
+        width: 64px;
+        height: 64px;
         background: #2563eb;
-        display: flex; align-items: center; justify-content: center;
-        margin: 4px auto 16px;
-        box-shadow: 0 4px 20px rgba(37,99,235,0.35);
-    }
-    .avatar i { font-size: 24px; color: #fff; }
-    .title {
-        color: #ffffff;
-        font-size: 20px;
-        font-weight: 600;
-        letter-spacing: -0.3px;
-        margin-bottom: 6px;
-    }
-    .subtitle {
-        color: #8b949e;
-        font-size: 13px;
-        font-weight: 300;
-        word-break: break-all;
-    }
-    .status-badge {
-        display: inline-flex;
+        border-radius: 50%;
+        display: flex;
         align-items: center;
-        gap: 8px;
-        margin-top: 16px;
-        padding: 6px 14px;
+        justify-content: center;
+        margin: 0 auto 12px;
+        font-size: 24px;
+    }
+    .title { font-size: 20px; font-weight: 600; }
+    .subtitle { color: #8b949e; font-size: 13px; margin-top: 4px; word-break: break-all; }
+    .badge {
+        display: inline-block;
+        padding: 6px 16px;
         border-radius: 20px;
         font-size: 12px;
         font-weight: 600;
-        background-color: #1a202c;
-        border: 1px solid #2d3748;
-        color: #8b949e;
-        letter-spacing: 0.3px;
+        margin-top: 12px;
+        background: rgba(16,185,129,0.1);
+        color: #6ee7b7;
+        border: 1px solid rgba(16,185,129,0.2);
     }
-    .status-badge .dot {
-        width: 7px; height: 7px;
-        border-radius: 50%;
-        background: #8b949e;
-    }
-    .status-badge.active { background-color: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.25); color: #6ee7b7; }
-    .status-badge.active .dot { background: #10b981; box-shadow: 0 0 8px #10b981; }
-    .status-badge.error { background-color: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.25); color: #fca5a5; }
-    .status-badge.error .dot { background: #ef4444; }
-    .status-badge.pulse .dot { animation: pulseDot 1.2s ease-in-out infinite; }
-    @keyframes pulseDot { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
-    .label {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 13px;
-        font-weight: 500;
-        color: #f3f4f6;
-        margin-bottom: 14px;
-        letter-spacing: 0.3px;
-    }
-    .label i { color: #3b82f6; margin-right: 8px; }
-    .progress-track {
-        width: 100%;
-        background-color: #1a202c;
-        border: 1px solid #2d3748;
-        border-radius: 999px;
-        height: 12px;
-        padding: 2px;
-        overflow: hidden;
-    }
-    .progress-fill {
-        height: 100%;
-        border-radius: 999px;
-        background: #3b82f6;
-        transition: width 0.7s ease;
-    }
-    .usage-headline { font-size: 14px; font-weight: 700; color: #fff; }
-    .usage-headline span { font-size: 12px; font-weight: 400; color: #8b949e; }
+    .badge.error { background: rgba(239,68,68,0.1); color: #fca5a5; border-color: rgba(239,68,68,0.2); }
+    .badge.loading { background: rgba(59,130,246,0.1); color: #60a5fa; border-color: rgba(59,130,246,0.2); }
     .stat-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -147,510 +68,336 @@
         margin-top: 16px;
     }
     .stat-box {
-        background-color: #0d1117;
+        background: #0d1117;
         border: 1px solid #2d3748;
         border-radius: 10px;
         padding: 12px 14px;
     }
-    .stat-box .k { font-size: 11px; color: #8b949e; margin-bottom: 6px; }
-    .stat-box .k i { color: #3b82f6; margin-right: 6px; }
-    .stat-box .v { font-size: 14px; font-weight: 600; color: #e5e7eb; }
+    .stat-box .label { font-size: 11px; color: #8b949e; margin-bottom: 4px; }
+    .stat-box .value { font-size: 14px; font-weight: 600; color: #e5e7eb; }
+    .entry {
+        background: #0d1117;
+        border: 1px solid #2d3748;
+        border-radius: 10px;
+        padding: 14px 16px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .entry-info { flex: 1; min-width: 0; }
+    .entry-name { font-weight: 600; font-size: 13px; }
+    .entry-detail { font-size: 11px; color: #6b7280; font-family: 'Fira Code', monospace; }
+    .entry-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .btn-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background: #1a202c;
+        border: 1px solid #2d3748;
+        color: #8b949e;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    .btn-icon:hover { border-color: #3b82f6; color: #fff; background: rgba(59,130,246,0.1); }
+    .btn-primary {
+        width: 100%;
+        padding: 12px;
+        background: #2563eb;
+        border: none;
+        border-radius: 10px;
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); }
+    .qr-box {
+        display: none;
+        justify-content: center;
+        padding-top: 14px;
+        margin-top: 14px;
+        border-top: 1px dashed #2d3748;
+    }
+    .qr-box.show { display: flex; }
+    .qr-box > div { background: #fff; padding: 10px; border-radius: 10px; }
+    .hidden { display: none !important; }
+    .empty { text-align: center; color: #64748b; padding: 30px 0; }
+    .toast {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #10b981;
+        color: #052e21;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 13px;
+        z-index: 999;
+        animation: fadeInUp 0.3s ease;
+    }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translate(-50%, 20px); }
+        to { opacity: 1; transform: translate(-50%, 0); }
+    }
+    .protocol-bars { margin-top: 12px; }
     .proto-row {
         display: flex;
         align-items: center;
         gap: 12px;
         font-size: 12px;
-        margin-bottom: 12px;
+        margin-bottom: 8px;
     }
-    .proto-row:last-child { margin-bottom: 0; }
-    .proto-name {
-        width: 88px;
-        flex-shrink: 0;
-        font-weight: 600;
-        font-family: 'Fira Code', monospace;
-    }
-    .proto-track {
-        flex: 1;
-        height: 6px;
-        background-color: #1a202c;
-        border-radius: 999px;
-        overflow: hidden;
-    }
+    .proto-name { width: 80px; font-weight: 600; font-family: 'Fira Code', monospace; }
+    .proto-track { flex: 1; height: 6px; background: #1a202c; border-radius: 999px; overflow: hidden; }
     .proto-fill { height: 100%; border-radius: 999px; }
-    .proto-count { font-family: 'Fira Code', monospace; color: #64748b; width: 20px; text-align: right; }
-    .list-head {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
-        padding: 0 2px;
-    }
-    .list-head h2 {
-        font-size: 12px;
-        font-weight: 700;
-        color: #8b949e;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    .list-head h2 span { font-family: 'Fira Code', monospace; color: #4a5568; text-transform: none; }
-    .action-btn {
-        background: none;
-        border: 1px solid #2d3748;
-        color: #8b949e;
-        padding: 5px 14px;
-        border-radius: 6px;
-        font-size: 12px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        font-family: inherit;
-    }
-    .action-btn:hover {
-        border-color: #3b82f6;
-        color: #ffffff;
-        background-color: rgba(59,130,246,0.1);
-    }
-    .action-btn.copied { border-color: #10b981; color: #10b981; background-color: rgba(16,185,129,0.1); }
-    #list { display: flex; flex-direction: column; gap: 10px; }
-    .entry-card {
-        background-color: #0d1117;
-        border: 1px solid #2d3748;
-        border-radius: 10px;
-        padding: 14px 16px;
-        transition: border-color 0.2s ease;
-    }
-    .entry-card:hover { border-color: rgba(59,130,246,0.35); }
-    .entry-top {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-    }
-    .entry-left {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        min-width: 0;
-    }
-    .entry-icon {
-        width: 38px; height: 38px;
-        border-radius: 8px;
-        display: flex; align-items: center; justify-content: center;
-        flex-shrink: 0;
-        font-size: 15px;
-    }
-    .entry-name { font-size: 13px; font-weight: 600; color: #f3f4f6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .entry-sub { font-size: 11px; color: #6b7280; font-family: 'Fira Code', monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .entry-actions { display: flex; gap: 6px; flex-shrink: 0; }
-    .icon-btn {
-        width: 34px; height: 34px;
-        border-radius: 8px;
-        background: #1a202c;
-        border: 1px solid #2d3748;
-        color: #8b949e;
-        display: flex; align-items: center; justify-content: center;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        font-size: 13px;
-    }
-    .icon-btn:hover { border-color: #3b82f6; color: #fff; background: rgba(59,130,246,0.12); }
-    .qr-box {
-        display: none;
-        justify-content: center;
-        margin-top: 14px;
-        padding-top: 14px;
-        border-top: 1px dashed #2d3748;
-    }
-    .qr-box.show { display: flex; }
-    .qr-box > div { padding: 10px; background: #fff; border-radius: 10px; }
-    .empty-msg { text-align: center; font-size: 13px; color: #64748b; padding: 20px 0; }
-    .hidden { display: none !important; }
-    .toast {
-        position: fixed;
-        bottom: 24px; left: 50%;
-        transform: translateX(-50%);
-        background-color: #10b981;
-        color: #052e21;
-        font-weight: 700;
-        padding: 10px 18px;
-        border-radius: 10px;
-        font-size: 13px;
-        z-index: 50;
-        box-shadow: 0 4px 20px rgba(16,185,129,0.3);
-        animation: fadeIn 0.25s ease;
-    }
-    @keyframes fadeIn { from { opacity: 0; transform: translate(-50%,10px);} to { opacity: 1; transform: translate(-50%,0);} }
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: rgba(15,23,42,0.5); border-radius: 4px; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #475569; }
-    @media (max-width: 480px) {
-        .card { padding: 22px 16px; }
-        .title { font-size: 18px; }
-    }
+    .proto-count { font-family: 'Fira Code', monospace; color: #64748b; width: 24px; text-align: right; }
 </style>
 </head>
 <body>
-<div class="ambient-glow"></div>
-<div class="grid-bg"></div>
-<div class="wrap">
-    <div class="card header">
-        <div class="top-bar"></div>
-        <div class="avatar"><i class="fas fa-shield-halved"></i></div>
-        <div class="title" id="userTitle">Your Account</div>
-        <div class="subtitle mono" id="statusMsg">Loading subscription info...</div>
-        <span id="statusBadge" class="status-badge pulse">
-            <span class="dot"></span>
-            <span id="statusBadgeText">Loading</span>
-        </span>
-    </div>
-    <div class="card hidden" id="usageCard">
-        <div class="label">
-            <span><i class="fas fa-chart-pie"></i>Data Used</span>
-            <span class="usage-headline" id="usageHeadline">-</span>
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <div class="avatar"><i class="fas fa-shield-halved"></i></div>
+            <div class="title" id="userTitle">Your Account</div>
+            <div class="subtitle" id="statusMsg">Loading subscription...</div>
+            <div class="badge loading" id="statusBadge">⏳ Loading</div>
         </div>
-        <div class="progress-track"><div class="progress-fill" id="usageFill" style="width:0%"></div></div>
-        <div class="stat-grid">
-            <div class="stat-box">
-                <div class="k"><i class="fas fa-calendar-days"></i>Renews On</div>
-                <div class="v" id="renewDate">-</div>
+        
+        <div id="usageSection" class="hidden">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                <span style="font-size:13px;font-weight:500;"><i class="fas fa-chart-pie" style="color:#3b82f6;"></i> Data Usage</span>
+                <span style="font-size:14px;font-weight:700;" id="usageText">-</span>
             </div>
-            <div class="stat-box">
-                <div class="k"><i class="fas fa-hourglass-half"></i>Time Left</div>
-                <div class="v" id="daysLeft">-</div>
+            <div class="progress-track" style="width:100%;background:#1a202c;border-radius:999px;height:8px;overflow:hidden;border:1px solid #2d3748;">
+                <div class="progress-fill" id="usageFill" style="width:0%;height:100%;background:#3b82f6;border-radius:999px;transition:width 0.5s;"></div>
+            </div>
+            <div class="stat-grid">
+                <div class="stat-box">
+                    <div class="label"><i class="fas fa-calendar-days" style="color:#3b82f6;"></i> Expires</div>
+                    <div class="value" id="expireDate">-</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label"><i class="fas fa-hourglass-half" style="color:#3b82f6;"></i> Days Left</div>
+                    <div class="value" id="daysLeft">-</div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="card hidden" id="protoCard">
-        <div class="label"><span><i class="fas fa-shuffle"></i>Protocol Mix</span></div>
-        <div id="protoBars"></div>
-    </div>
-    <div class="card hidden" id="listWrap">
-        <div class="list-head">
-            <h2>Configs <span id="countBadge">(0)</span></h2>
-            <button id="copyAllBtn" class="action-btn"><i class="fas fa-copy" style="margin-right:6px"></i>Copy All</button>
-        </div>
-        <div id="list"></div>
-    </div>
-    <p class="empty-msg hidden" id="emptyMsg">No configs found. Check your subscription link or content.</p>
-</div>
-<script>
-// ---------- Element refs ----------
-const userTitle      = document.getElementById('userTitle');
-const statusMsg      = document.getElementById('statusMsg');
-const statusBadge    = document.getElementById('statusBadge');
-const statusBadgeText= document.getElementById('statusBadgeText');
-const usageCard      = document.getElementById('usageCard');
-const usageFill      = document.getElementById('usageFill');
-const usageHeadline  = document.getElementById('usageHeadline');
-const renewDate      = document.getElementById('renewDate');
-const daysLeft       = document.getElementById('daysLeft');
-const protoCard      = document.getElementById('protoCard');
-const protoBars      = document.getElementById('protoBars');
-const listWrap       = document.getElementById('listWrap');
-const listEl         = document.getElementById('list');
-const countBadge     = document.getElementById('countBadge');
-const emptyMsg       = document.getElementById('emptyMsg');
-const copyAllBtn     = document.getElementById('copyAllBtn');
 
-// ---------- Helpers ----------
-function toast(text){
+    <div class="card" id="configsCard">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h2 style="font-size:14px;color:#8b949e;"><i class="fas fa-link" style="color:#3b82f6;"></i> Configs <span id="countBadge">(0)</span></h2>
+            <button class="btn-icon" id="copyAllBtn" title="Copy All"><i class="fas fa-copy"></i></button>
+        </div>
+        <div id="configsList"></div>
+        <div class="empty hidden" id="emptyMsg">No configs found</div>
+    </div>
+</div>
+
+<script>
+const CONFIGS = {
+    'txctcczehekbjlkq': {
+        email: '2i26ggip4n',
+        uuid: '91ee0eab-6f58-4841-9421-138a27f7d00b',
+        address: '5tuj-production.up.railway.app',
+        port: '8080',
+        path: '/',
+        host: '5tuj-production.up.railway.app'
+    },
+    '2i26ggip4n': {
+        email: '2i26ggip4n',
+        uuid: '91ee0eab-6f58-4841-9421-138a27f7d00b',
+        address: '5tuj-production.up.railway.app',
+        port: '8080',
+        path: '/',
+        host: '5tuj-production.up.railway.app'
+    },
+    'ufa7zpn9': {
+        email: 'ufa7zpn9',
+        uuid: 'bbf1d118-aecd-408a-94fa-717cc6746aff',
+        address: '5tuj-production.up.railway.app',
+        port: '8080',
+        path: '/',
+        host: '5tuj-production.up.railway.app'
+    },
+    'z7k8oqou': {
+        email: 'z7k8oqou',
+        uuid: '5d88e790-a966-4a50-a34d-90acb6129313',
+        address: '5tuj-production.up.railway.app',
+        port: '8080',
+        path: '/',
+        host: '5tuj-production.up.railway.app'
+    }
+};
+
+function getVLESSLink(config) {
+    return `vless://${config.uuid}@${config.address}:${config.port}?encryption=none&security=none&type=ws&host=${config.host}&path=${config.path}#${config.email}`;
+}
+
+function detectProtocol(uri) {
+    if (uri.startsWith('vless://')) return { key: 'vless', label: 'VLESS', icon: 'fa-bolt', color: '#3b82f6' };
+    if (uri.startsWith('vmess://')) return { key: 'vmess', label: 'VMESS', icon: 'fa-shuffle', color: '#a78bfa' };
+    if (uri.startsWith('trojan://')) return { key: 'trojan', label: 'TROJAN', icon: 'fa-mask', color: '#ec4899' };
+    return { key: 'other', label: 'UNKNOWN', icon: 'fa-link', color: '#8b949e' };
+}
+
+function toast(msg) {
     const el = document.createElement('div');
     el.className = 'toast';
-    el.innerHTML = '<i class="fas fa-check-circle" style="margin-right:6px"></i>' + text;
+    el.innerHTML = `<i class="fas fa-check-circle"></i> ${msg}`;
     document.body.appendChild(el);
-    setTimeout(() => el.remove(), 1800);
+    setTimeout(() => el.remove(), 2000);
 }
 
-function setBadge(state, text){
-    statusBadge.classList.remove('active','error','pulse');
-    if(state === 'active') {
-        statusBadge.classList.add('active');
-        statusBadgeText.textContent = text;
-    } else if(state === 'error') {
-        statusBadge.classList.add('error');
-        statusBadgeText.textContent = text;
-    } else {
-        statusBadge.classList.add('pulse');
-        statusBadgeText.textContent = text || 'Loading...';
-    }
+function setBadge(state, text) {
+    const badge = document.getElementById('statusBadge');
+    badge.className = 'badge';
+    if (state === 'active') badge.classList.add('active');
+    else if (state === 'error') badge.classList.add('error');
+    else badge.classList.add('loading');
+    badge.textContent = text;
 }
 
-function setStatus(text){ 
-    statusMsg.textContent = text; 
+function setStatus(text) {
+    document.getElementById('statusMsg').textContent = text;
 }
 
-function fmtBytes(bytes){
-    if(!isFinite(bytes) || bytes < 0) return '-';
-    const units = ['B','KB','MB','GB','TB'];
-    let i = 0, v = bytes;
-    while(v >= 1024 && i < units.length-1){ v /= 1024; i++; }
+function fmtBytes(bytes) {
+    if (!bytes || bytes < 0) return '-';
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    let i = 0;
+    let v = bytes;
+    while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
     return v.toFixed(v >= 10 ? 0 : 1) + ' ' + units[i];
 }
 
-// ---------- Protocol detection ----------
-function detectProto(uri){
-    if(uri.startsWith('vless://'))   return {key:'vless', label:'VLESS', icon:'fa-bolt', color:'#3b82f6', bg:'rgba(59,130,246,0.1)', text:'#60a5fa'};
-    if(uri.startsWith('vmess://'))   return {key:'vmess', label:'VMESS', icon:'fa-shuffle', color:'#a78bfa', bg:'rgba(167,139,250,0.1)', text:'#c4b5fd'};
-    if(uri.startsWith('trojan://')) return {key:'trojan', label:'TROJAN', icon:'fa-mask', color:'#ec4899', bg:'rgba(236,72,153,0.1)', text:'#f9a8d4'};
-    if(uri.startsWith('ss://'))      return {key:'ss', label:'SHADOWSOCKS', icon:'fa-lock', color:'#38bdf8', bg:'rgba(56,189,248,0.1)', text:'#7dd3fc'};
-    if(uri.startsWith('hysteria2://') || uri.startsWith('hy2://')) return {key:'hy2', label:'HYSTERIA2', icon:'fa-cloud', color:'#10b981', bg:'rgba(16,185,129,0.1)', text:'#6ee7b7'};
-    if(uri.startsWith('tuic://'))    return {key:'tuic', label:'TUIC', icon:'fa-satellite-dish', color:'#f59e0b', bg:'rgba(245,158,11,0.1)', text:'#fcd34d'};
-    return {key:'other', label:'UNKNOWN', icon:'fa-link', color:'#94a3b8', bg:'rgba(148,163,184,0.1)', text:'#cbd5e1'};
-}
-
-function parseEntry(uri){
-    const proto = detectProto(uri);
-    let name = proto.label;
-    let subtitle = '';
-    try{
-        if(proto.key === 'vmess'){
-            const json = JSON.parse(atob(uri.replace('vmess://','')));
-            name = json.ps || proto.label;
-            subtitle = `${json.add || '-'}:${json.port || '-'}  ${json.net || 'tcp'}`;
-        } else {
-            const hashIdx = uri.indexOf('#');
-            if(hashIdx > -1) name = decodeURIComponent(uri.slice(hashIdx+1)) || proto.label;
-            const body = uri.split('://')[1] || '';
-            const beforeHash = body.split('#')[0];
-            const [userAndHost, queryStr] = beforeHash.split('?');
-            const afterAt = userAndHost.includes('@') ? userAndHost.split('@')[1] : userAndHost;
-            const [host, port] = afterAt.split(':');
-            const qs = new URLSearchParams(queryStr || '');
-            subtitle = `${host || '-'}:${port || '-'}  ${qs.get('type') || 'tcp'}`;
-        }
-    }catch(e){}
-    return {uri, proto, name, subtitle};
-}
-
-// ---------- Render ----------
-function renderProtoBreakdown(entries){
-    const counts = {};
-    entries.forEach(e => { counts[e.proto.key] = (counts[e.proto.key]||0) + 1; });
-    const keys = Object.keys(counts);
-    protoBars.innerHTML = '';
-    if(keys.length === 0){ protoCard.classList.add('hidden'); return; }
-    protoCard.classList.remove('hidden');
-    const max = Math.max(...Object.values(counts));
-    keys.forEach(k => {
-        const sample = entries.find(e => e.proto.key === k).proto;
-        const row = document.createElement('div');
-        row.className = 'proto-row';
-        row.innerHTML = `
-            <span class="proto-name mono" style="color:${sample.color}">${sample.label}</span>
-            <div class="proto-track"><div class="proto-fill" style="width:${(counts[k]/max*100)}%;background:${sample.color}"></div></div>
-            <span class="proto-count mono">${counts[k]}</span>
-        `;
-        protoBars.appendChild(row);
-    });
-}
-
-function renderEntries(linksArray){
-    listEl.innerHTML = '';
-    if(!linksArray || linksArray.length === 0){
-        listWrap.classList.add('hidden');
+function renderEntries(links) {
+    const list = document.getElementById('configsList');
+    const countBadge = document.getElementById('countBadge');
+    const emptyMsg = document.getElementById('emptyMsg');
+    
+    list.innerHTML = '';
+    
+    if (!links || links.length === 0) {
         emptyMsg.classList.remove('hidden');
-        setBadge('error', 'No configs found');
-        setStatus('No configs found in subscription');
+        countBadge.textContent = '(0)';
         return;
     }
+    
     emptyMsg.classList.add('hidden');
-    listWrap.classList.remove('hidden');
-    setStatus('Subscription loaded successfully');
-    setBadge('active', 'Active');
-    const entries = linksArray.map(parseEntry);
-    countBadge.textContent = `(${entries.length})`;
-    renderProtoBreakdown(entries);
-    if(entries.length && entries[0].name){
-        userTitle.textContent = entries[0].name;
-    }
-    entries.forEach((entry, idx) => {
-        const card = document.createElement('div');
-        card.className = 'entry-card';
-        card.innerHTML = `
-            <div class="entry-top">
-                <div class="entry-left">
-                    <div class="entry-icon" style="background:${entry.proto.bg};color:${entry.proto.text}">
-                        <i class="fas ${entry.proto.icon}"></i>
-                    </div>
-                    <div style="min-width:0">
-                        <div class="entry-name">${entry.name}</div>
-                        <div class="entry-sub">${entry.subtitle}</div>
-                    </div>
-                </div>
-                <div class="entry-actions">
-                    <button class="icon-btn qr-toggle"><i class="fas fa-qrcode"></i></button>
-                    <button class="icon-btn copy-one"><i class="fas fa-copy"></i></button>
-                </div>
+    countBadge.textContent = `(${links.length})`;
+    
+    // Protocol breakdown
+    const protoCount = {};
+    links.forEach(link => {
+        const proto = detectProtocol(link);
+        protoCount[proto.key] = (protoCount[proto.key] || 0) + 1;
+    });
+    
+    // Render each entry
+    links.forEach((link, idx) => {
+        const proto = detectProtocol(link);
+        const div = document.createElement('div');
+        div.className = 'entry';
+        
+        const name = link.split('#').pop() || proto.label;
+        const sub = link.split('://')[1]?.split('?')[0] || '';
+        
+        div.innerHTML = `
+            <div class="entry-info">
+                <div class="entry-name"><span style="color:${proto.color}">●</span> ${name}</div>
+                <div class="entry-detail">${sub.substring(0, 40)}${sub.length > 40 ? '...' : ''}</div>
             </div>
-            <div class="qr-box" id="qr-${idx}">
-                <div id="qr-canvas-${idx}"></div>
+            <div class="entry-actions">
+                <button class="btn-icon qr-btn" data-idx="${idx}"><i class="fas fa-qrcode"></i></button>
+                <button class="btn-icon copy-btn" data-link="${link}"><i class="fas fa-copy"></i></button>
             </div>
+            <div class="qr-box" id="qr-${idx}"><div id="qr-canvas-${idx}"></div></div>
         `;
-        listEl.appendChild(card);
-        card.querySelector('.copy-one').addEventListener('click', () => {
-            navigator.clipboard.writeText(entry.uri).then(() => toast('Link copied'));
+        
+        list.appendChild(div);
+        
+        // Copy button
+        div.querySelector('.copy-btn').addEventListener('click', function() {
+            navigator.clipboard.writeText(this.dataset.link).then(() => toast('Copied!'));
         });
-        card.querySelector('.qr-toggle').addEventListener('click', () => {
-            const box = card.querySelector('.qr-box');
+        
+        // QR button
+        div.querySelector('.qr-btn').addEventListener('click', function() {
+            const box = document.getElementById(`qr-${idx}`);
             const showing = box.classList.contains('show');
             box.classList.toggle('show', !showing);
-            const holder = card.querySelector(`#qr-canvas-${idx}`);
-            if(!showing && holder.childElementCount === 0){
-                new QRCode(holder, {text: entry.uri, width: 168, height: 168, colorDark:'#0B0E13', colorLight:'#ffffff'});
+            const canvas = document.getElementById(`qr-canvas-${idx}`);
+            if (!showing && canvas.childElementCount === 0) {
+                new QRCode(canvas, { text: link, width: 160, height: 160, colorDark: '#0B0E13', colorLight: '#fff' });
             }
         });
     });
 }
 
-copyAllBtn.addEventListener('click', () => {
-    const allLinks = window.__rawLinks || [];
-    const text = allLinks.join('\n');
-    navigator.clipboard.writeText(text).then(() => toast('All configs copied'));
+function loadSubscription(id) {
+    const config = CONFIGS[id];
+    
+    if (!config) {
+        setStatus('Invalid subscription ID');
+        setBadge('error', '❌ Invalid');
+        document.getElementById('configsList').innerHTML = '';
+        document.getElementById('emptyMsg').classList.remove('hidden');
+        return;
+    }
+    
+    setStatus(`Loading ${config.email}...`);
+    setBadge('loading', '⏳ Loading');
+    
+    const link = getVLESSLink(config);
+    const links = [link];
+    
+    document.getElementById('userTitle').textContent = config.email;
+    renderEntries(links);
+    setStatus(`Ready (${config.email})`);
+    setBadge('active', '✅ Active');
+    
+    // Show usage
+    document.getElementById('usageSection').classList.remove('hidden');
+    document.getElementById('usageText').innerHTML = '0 B <span style="font-size:12px;color:#8b949e;font-weight:400;">of unlimited</span>';
+    document.getElementById('usageFill').style.width = '0%';
+    document.getElementById('expireDate').textContent = 'Unlimited';
+    document.getElementById('daysLeft').textContent = 'Unlimited';
+}
+
+// Copy all
+document.getElementById('copyAllBtn').addEventListener('click', function() {
+    const links = [];
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+        links.push(btn.dataset.link);
+    });
+    navigator.clipboard.writeText(links.join('\n')).then(() => toast('All configs copied!'));
 });
 
-// ---------- Main: Load from Panel API ----------
-async function loadSubscription(email) {
-    try {
-        setStatus('Connecting to panel API...');
-        setBadge('pulse', 'Loading');
-        
-        // Step 1: Login to panel API
-        const loginRes = await fetch('/mikaeel/panel/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                username: 'admin',
-                password: 'admin'  // تغییر با پسورد واقعی
-            })
-        });
-        
-        if (!loginRes.ok) {
-            throw new Error('Login failed: ' + loginRes.status);
+// Init
+(function() {
+    const params = new URLSearchParams(window.location.search);
+    let id = params.get('id') || params.get('email');
+    
+    if (!id) {
+        const path = window.location.pathname;
+        const parts = path.split('/');
+        const last = parts[parts.length - 1];
+        if (last && last !== 'sub' && last !== 'sub-link.html') {
+            id = last;
         }
-        
-        setStatus('Fetching subscription links...');
-        
-        // Step 2: Get subscription links for the client
-        const subRes = await fetch(`/mikaeel/panel/api/clients/links/${email}`, {
-            method: 'GET',
-            credentials: 'include'
-        });
-        
-        if (!subRes.ok) {
-            if (subRes.status === 404) {
-                throw new Error(`Client "${email}" not found`);
-            }
-            throw new Error(`API error: ${subRes.status} - ${subRes.statusText}`);
-        }
-        
-        const links = await subRes.json();
-        console.log('Links from API:', links);
-        
-        // Step 3: Get client traffic info
-        try {
-            const trafficRes = await fetch(`/mikaeel/panel/api/clients/traffic/${email}`, {
-                method: 'GET',
-                credentials: 'include'
-            });
-            if (trafficRes.ok) {
-                const traffic = await trafficRes.json();
-                if (traffic) {
-                    const total = traffic.total || 0;
-                    const used = (traffic.up || 0) + (traffic.down || 0);
-                    if (total > 0) {
-                        renderUsageInfo(`upload=${traffic.up||0}; download=${traffic.down||0}; total=${total}; expire=${traffic.expiryTime||0}`);
-                    }
-                }
-            }
-        } catch (e) {
-            console.warn('Could not fetch traffic info:', e);
-        }
-        
-        if (!links || links.length === 0) {
-            throw new Error('No links found for this client');
-        }
-        
-        window.__rawLinks = links;
-        renderEntries(links);
-        return true;
-        
-    } catch (error) {
-        console.error('Load error:', error);
-        setStatus('Failed to load subscription: ' + error.message);
-        setBadge('error', 'Failed');
-        return false;
     }
-}
-
-// ---------- Usage info ----------
-function renderUsageInfo(headerStr){
-    if(!headerStr){ 
-        usageCard.classList.add('hidden'); 
-        return; 
+    
+    if (!id) {
+        id = 'txctcczehekbjlkq';
     }
-    const parts = {};
-    headerStr.split(';').forEach(p => {
-        const [k,v] = p.trim().split('=');
-        if(k && v !== undefined) parts[k.trim()] = parseInt(v.trim(), 10);
-    });
-    const used = (parts.upload || 0) + (parts.download || 0);
-    const total = parts.total || 0;
-    const expire = parts.expire || 0;
-    usageCard.classList.remove('hidden');
-    if(total > 0){
-        const pct = Math.min(100, (used/total)*100);
-        usageFill.style.width = pct + '%';
-        usageFill.style.background = pct > 90 ? '#ef4444' : pct > 70 ? '#f59e0b' : '#3b82f6';
-        usageHeadline.innerHTML = `${fmtBytes(used)} <span>of ${fmtBytes(total)}</span>`;
-    } else if (used > 0){
-        usageFill.style.width = '100%';
-        usageHeadline.innerHTML = `${fmtBytes(used)} <span>used (unlimited)</span>`;
-    } else {
-        usageFill.style.width = '0%';
-        usageHeadline.textContent = 'No usage yet';
-    }
-    if(expire > 0){
-        const now = Math.floor(Date.now()/1000);
-        const days = Math.max(0, Math.ceil((expire - now) / 86400));
-        daysLeft.textContent = days + (days === 1 ? ' day' : ' days');
-        const d = new Date(expire*1000);
-        renewDate.textContent = d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-    } else {
-        daysLeft.textContent = 'Unlimited';
-        renewDate.textContent = 'Unlimited';
-    }
-}
-
-// ---------- Init ----------
-(async function init() {
-    try {
-        // Get email from URL
-        const params = new URLSearchParams(window.location.search);
-        let email = params.get('email') || params.get('id');
-        
-        // If not in query params, check path
-        if (!email) {
-            const pathParts = window.location.pathname.split('/');
-            const lastPart = pathParts[pathParts.length - 1];
-            if (lastPart && lastPart !== 'sub' && lastPart !== 'sub-link.html') {
-                email = lastPart;
-            }
-        }
-        
-        // Default to the client email
-        if (!email) {
-            email = 'ufa7zpn9';  // Your client email
-        }
-        
-        console.log('Loading client:', email);
-        await loadSubscription(email);
-        
-    } catch (error) {
-        console.error('Init error:', error);
-        setStatus('Error initializing subscription');
-        setBadge('error', 'Error');
-    }
+    
+    loadSubscription(id);
 })();
 </script>
 </body>
