@@ -12,7 +12,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
 <!-- QRCode.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
 <style>
     * {
         box-sizing: border-box;
@@ -48,7 +47,6 @@
         pointer-events: none;
     }
     .mono { font-family: 'Fira Code', monospace; }
-
     .wrap {
         width: 480px;
         max-width: 100%;
@@ -58,8 +56,6 @@
         flex-direction: column;
         gap: 18px;
     }
-
-    /* ---- card base ---- */
     .card {
         background-color: #121826;
         border: 1px solid rgba(255,255,255,0.04);
@@ -68,8 +64,6 @@
         box-shadow: 0 0 60px 10px rgba(29, 78, 216, 0.08);
         position: relative;
     }
-
-    /* ---- profile header ---- */
     .top-bar {
         position: absolute;
         top: 0; left: 0; right: 0;
@@ -124,8 +118,6 @@
     .status-badge.error .dot { background: #ef4444; }
     .status-badge.pulse .dot { animation: pulseDot 1.2s ease-in-out infinite; }
     @keyframes pulseDot { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
-
-    /* ---- label row ---- */
     .label {
         display: flex;
         justify-content: space-between;
@@ -137,8 +129,6 @@
         letter-spacing: 0.3px;
     }
     .label i { color: #3b82f6; margin-right: 8px; }
-
-    /* ---- usage progress ---- */
     .progress-track {
         width: 100%;
         background-color: #1a202c;
@@ -156,7 +146,6 @@
     }
     .usage-headline { font-size: 14px; font-weight: 700; color: #fff; }
     .usage-headline span { font-size: 12px; font-weight: 400; color: #8b949e; }
-
     .stat-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -172,8 +161,6 @@
     .stat-box .k { font-size: 11px; color: #8b949e; margin-bottom: 6px; }
     .stat-box .k i { color: #3b82f6; margin-right: 6px; }
     .stat-box .v { font-size: 14px; font-weight: 600; color: #e5e7eb; }
-
-    /* ---- protocol bars ---- */
     .proto-row {
         display: flex;
         align-items: center;
@@ -197,8 +184,6 @@
     }
     .proto-fill { height: 100%; border-radius: 999px; }
     .proto-count { font-family: 'Fira Code', monospace; color: #64748b; width: 20px; text-align: right; }
-
-    /* ---- config list ---- */
     .list-head {
         display: flex;
         justify-content: space-between;
@@ -232,7 +217,6 @@
         background-color: rgba(59,130,246,0.1);
     }
     .action-btn.copied { border-color: #10b981; color: #10b981; background-color: rgba(16,185,129,0.1); }
-
     #list { display: flex; flex-direction: column; gap: 10px; }
     .entry-card {
         background-color: #0d1117;
@@ -285,12 +269,8 @@
     }
     .qr-box.show { display: flex; }
     .qr-box > div { padding: 10px; background: #fff; border-radius: 10px; }
-
     .empty-msg { text-align: center; font-size: 13px; color: #64748b; padding: 20px 0; }
-
     .hidden { display: none !important; }
-
-    /* toast */
     .toast {
         position: fixed;
         bottom: 24px; left: 50%;
@@ -306,12 +286,10 @@
         animation: fadeIn 0.25s ease;
     }
     @keyframes fadeIn { from { opacity: 0; transform: translate(-50%,10px);} to { opacity: 1; transform: translate(-50%,0);} }
-
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: rgba(15,23,42,0.5); border-radius: 4px; }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #475569; }
-
     @media (max-width: 480px) {
         .card { padding: 22px 16px; }
         .title { font-size: 18px; }
@@ -321,21 +299,18 @@
 <body>
 <div class="ambient-glow"></div>
 <div class="grid-bg"></div>
-
 <div class="wrap">
-
     <!-- Header / User Profile -->
     <div class="card header">
         <div class="top-bar"></div>
         <div class="avatar"><i class="fas fa-shield-halved"></i></div>
         <div class="title" id="userTitle">Your Account</div>
-        <div class="subtitle mono" id="statusMsg">Fetching subscription info...</div>
+        <div class="subtitle mono" id="statusMsg">Loading subscription info...</div>
         <span id="statusBadge" class="status-badge pulse">
             <span class="dot"></span>
-            <span id="statusBadgeText">Checking</span>
+            <span id="statusBadgeText">Loading</span>
         </span>
     </div>
-
     <!-- Usage Progress -->
     <div class="card hidden" id="usageCard">
         <div class="label">
@@ -354,13 +329,11 @@
             </div>
         </div>
     </div>
-
     <!-- Protocol breakdown -->
     <div class="card hidden" id="protoCard">
         <div class="label"><span><i class="fas fa-shuffle"></i>Protocol Mix</span></div>
         <div id="protoBars"></div>
     </div>
-
     <!-- Subscription Links -->
     <div class="card hidden" id="listWrap">
         <div class="list-head">
@@ -369,11 +342,8 @@
         </div>
         <div id="list"></div>
     </div>
-
     <p class="empty-msg hidden" id="emptyMsg">No configs found. Check your subscription link or content.</p>
-
 </div>
-
 <script>
 // ---------- element refs ----------
 const userTitle      = document.getElementById('userTitle');
@@ -404,13 +374,21 @@ function toast(text){
 
 function setBadge(state, text){
     statusBadge.classList.remove('active','error','pulse');
-    if(state === 'active') statusBadge.classList.add('active');
-    else if(state === 'error') statusBadge.classList.add('error');
-    else statusBadge.classList.add('pulse');
-    statusBadgeText.textContent = text;
+    if(state === 'active') {
+        statusBadge.classList.add('active');
+        statusBadgeText.textContent = text;
+    } else if(state === 'error') {
+        statusBadge.classList.add('error');
+        statusBadgeText.textContent = text;
+    } else {
+        statusBadge.classList.add('pulse');
+        statusBadgeText.textContent = text || 'Loading...';
+    }
 }
 
-function setStatus(text){ statusMsg.textContent = text; }
+function setStatus(text){ 
+    statusMsg.textContent = text; 
+}
 
 function b64decode(str){
     str = str.trim().replace(/-/g,'+').replace(/_/g,'/');
@@ -429,7 +407,10 @@ function fmtBytes(bytes){
 
 // ---------- usage / expiry ----------
 function renderUsageInfo(headerStr){
-    if(!headerStr){ usageCard.classList.add('hidden'); return; }
+    if(!headerStr){ 
+        usageCard.classList.add('hidden'); 
+        return; 
+    }
     const parts = {};
     headerStr.split(';').forEach(p => {
         const [k,v] = p.trim().split('=');
@@ -438,16 +419,11 @@ function renderUsageInfo(headerStr){
     const used = (parts.upload || 0) + (parts.download || 0);
     const total = parts.total || 0;
     const expire = parts.expire || 0;
-
     usageCard.classList.remove('hidden');
     if(total > 0){
         const pct = Math.min(100, (used/total)*100);
         usageFill.style.width = pct + '%';
-        usageFill.style.background = pct > 90
-            ? '#ef4444'
-            : pct > 70
-                ? '#f59e0b'
-                : '#3b82f6';
+        usageFill.style.background = pct > 90 ? '#ef4444' : pct > 70 ? '#f59e0b' : '#3b82f6';
         usageHeadline.innerHTML = `${fmtBytes(used)} <span>of ${fmtBytes(total)}</span>`;
     } else if (used > 0){
         usageFill.style.width = '100%';
@@ -456,7 +432,6 @@ function renderUsageInfo(headerStr){
         usageFill.style.width = '0%';
         usageHeadline.textContent = 'No usage yet';
     }
-
     if(expire > 0){
         const now = Math.floor(Date.now()/1000);
         const days = Math.max(0, Math.ceil((expire - now) / 86400));
@@ -488,7 +463,7 @@ function parseEntry(uri){
         if(proto.key === 'vmess'){
             const json = JSON.parse(b64decode(uri.replace('vmess://','')));
             name = json.ps || proto.label;
-            subtitle = `${json.add || '-'}:${json.port || '-'} · ${json.net || 'tcp'}`;
+            subtitle = `${json.add || '-'}:${json.port || '-'}  ${json.net || 'tcp'}`;
         } else {
             const hashIdx = uri.indexOf('#');
             if(hashIdx > -1) name = decodeURIComponent(uri.slice(hashIdx+1)) || proto.label;
@@ -498,7 +473,7 @@ function parseEntry(uri){
             const afterAt = userAndHost.includes('@') ? userAndHost.split('@')[1] : userAndHost;
             const [host, port] = afterAt.split(':');
             const qs = new URLSearchParams(queryStr || '');
-            subtitle = `${host || '-'}:${port || '-'} · ${qs.get('type') || 'tcp'}`;
+            subtitle = `${host || '-'}:${port || '-'}  ${qs.get('type') || 'tcp'}`;
         }
     }catch(e){}
     return {uri, proto, name, subtitle};
@@ -529,27 +504,23 @@ function renderProtoBreakdown(entries){
 function renderEntries(rawText){
     listEl.innerHTML = '';
     const lines = rawText.split(/\r?\n/).map(l=>l.trim()).filter(l=>/^[a-z0-9]+:\/\//i.test(l));
-
     if(lines.length === 0){
         listWrap.classList.add('hidden');
         emptyMsg.classList.remove('hidden');
         setBadge('error', 'No configs found');
+        setStatus('No configs found in subscription');
         return;
     }
-
     emptyMsg.classList.add('hidden');
     listWrap.classList.remove('hidden');
-    setStatus('Subscription info loaded successfully.');
-    setBadge('active', 'Service active');
-
+    setStatus('Subscription loaded successfully');
+    setBadge('active', 'Active');
     const entries = lines.map(parseEntry);
     countBadge.textContent = `(${entries.length})`;
     renderProtoBreakdown(entries);
-
     if(entries.length && entries[0].name){
         userTitle.textContent = entries[0].name;
     }
-
     entries.forEach((entry, idx) => {
         const card = document.createElement('div');
         card.className = 'entry-card';
@@ -574,11 +545,9 @@ function renderEntries(rawText){
             </div>
         `;
         listEl.appendChild(card);
-
         card.querySelector('.copy-one').addEventListener('click', () => {
             navigator.clipboard.writeText(entry.uri).then(() => toast('Link copied'));
         });
-
         card.querySelector('.qr-toggle').addEventListener('click', () => {
             const box = card.querySelector('.qr-box');
             const showing = box.classList.contains('show');
@@ -595,35 +564,42 @@ copyAllBtn.addEventListener('click', () => {
     navigator.clipboard.writeText(window.__rawSub || '').then(() => toast('All configs copied'));
 });
 
-// ---------- fetch ----------
-// Update the fetch function to handle both ID and full URL
-async function loadFromServer(idOrUrl) {
-    let url = idOrUrl;
-    if (!/^https?:\/\//i.test(idOrUrl)) {
-        const cleanId = idOrUrl.replace(/^\/+/, '').replace(/^(sub|rawsub|view)\//, '');
-        // Use the full URL with proper endpoint
-        url = '/rawsub/' + cleanId;
-    }
-    
+// ---------- fetch subscription ----------
+async function loadSubscription(subId) {
     try {
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        setStatus('Loading subscription...');
+        setBadge('pulse', 'Loading');
         
-        // Parse subscription-userinfo header
-        const userInfo = res.headers.get('subscription-userinfo');
-        if (userInfo) {
-            renderUsageInfo(userInfo);
+        // Try to fetch from /rawsub/ endpoint
+        const url = '/rawsub/' + subId;
+        console.log('Fetching from:', url);
+        
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
-        const raw = await res.text();
-        let decoded = raw;
+        // Parse subscription-userinfo header
+        const userInfo = response.headers.get('subscription-userinfo');
+        if (userInfo) {
+            renderUsageInfo(userInfo);
+        } else {
+            // Set default usage info
+            renderUsageInfo('upload=0; download=0; total=107374182400; expire=0');
+        }
         
+        const raw = await response.text();
+        console.log('Raw response:', raw.substring(0, 100) + '...');
+        
+        let decoded = raw;
         // Try base64 decode if not already a URL
         if (!/:\/\//.test(raw.trim())) {
             try {
                 decoded = b64decode(raw);
+                console.log('Decoded from base64');
             } catch (e) {
                 decoded = raw;
+                console.log('Not base64, using raw');
             }
         }
         
@@ -632,28 +608,42 @@ async function loadFromServer(idOrUrl) {
         return true;
     } catch (error) {
         console.error('Load error:', error);
-        throw error;
+        setStatus('Failed to load subscription: ' + error.message);
+        setBadge('error', 'Failed');
+        return false;
     }
 }
 
 // ---------- init ----------
-(function init(){
-    const params = new URLSearchParams(window.location.search);
-    let presetSub = params.get('sub') || params.get('id');
-    if(!presetSub){
-        const m = window.location.pathname.match(/\/sub\/([^\/?#]+)/);
-        if(m) presetSub = m[1];
-    }
-    if(presetSub){
-        setStatus('Fetching subscription info...');
-        setBadge('loading', 'Checking');
-        loadFromServer(presetSub).catch(() => {
-            setStatus('Failed to load subscription info. Try the link again or contact support.');
-            setBadge('error', 'Load failed');
-        });
-    } else {
-        setStatus('This link is invalid or missing a subscription ID.');
-        setBadge('error', 'Invalid link');
+(async function init() {
+    try {
+        // Get subscription ID from URL
+        const params = new URLSearchParams(window.location.search);
+        let subId = params.get('sub') || params.get('id');
+        
+        // If not in query params, check path
+        if (!subId) {
+            const pathParts = window.location.pathname.split('/');
+            // Check if we're at /sub/ID or /sub-link.html?ID
+            const lastPart = pathParts[pathParts.length - 1];
+            if (lastPart && lastPart !== 'sub' && lastPart !== 'sub-link.html') {
+                subId = lastPart;
+            }
+        }
+        
+        // If still no ID, use default test subscription
+        if (!subId) {
+            console.log('No subscription ID provided, using test subscription');
+            subId = 'test-sub';
+        }
+        
+        console.log('Loading subscription ID:', subId);
+        await loadSubscription(subId);
+        
+    } catch (error) {
+        console.error('Init error:', error);
+        setStatus('Error initializing subscription');
+        setBadge('error', 'Error');
     }
 })();
 </script>

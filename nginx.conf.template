@@ -1,33 +1,47 @@
 worker_processes 1;
 events { worker_connections 1024; }
 http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+    
     server {
         listen ${NGINX_PORT};
+        server_name localhost;
         
-        # Fix Config (HTML)
+        # Fix Config Tool (HTML)
         location /fix-config {
             alias /var/www/html;
             index fix-config.html;
             try_files $uri $uri/ /fix-config.html;
         }
         
-        # Subscription page
+        # Subscription Page
         location /sub/ {
             alias /var/www/html/;
             index sub-link.html;
             try_files $uri $uri/ /sub-link.html;
         }
         
-        # Subscription raw data endpoint
+        # Subscription Page (without trailing slash)
+        location = /sub {
+            return 301 /sub/;
+        }
+        
+        # Subscription raw data endpoint - serve from filesystem
         location /rawsub/ {
-            proxy_pass http://127.0.0.1:2096/;
-            proxy_http_version 1.1;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            # Pass through subscription-userinfo header
-            proxy_pass_header subscription-userinfo;
+            alias /etc/x-ui/subscriptions/;
+            default_type text/plain;
+            
+            # Add CORS headers
+            add_header 'Access-Control-Allow-Origin' '*';
+            add_header 'Access-Control-Allow-Methods' 'GET, OPTIONS';
+            add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range';
+            
+            # Add subscription-userinfo header (upload=0; download=0; total=107374182400; expire=0)
+            add_header subscription-userinfo "upload=0; download=0; total=107374182400; expire=0" always;
+            
+            # Enable directory listing for debugging
+            autoindex off;
         }
         
         # X-UI admin panel
@@ -42,7 +56,7 @@ http {
             proxy_set_header X-Forwarded-Proto $scheme;
         }
         
-        # Default - proxy to VLESS/WebSocket
+        # VLESS/WebSocket proxy
         location / {
             proxy_pass http://127.0.0.1:8080;
             proxy_http_version 1.1;

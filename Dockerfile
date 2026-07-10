@@ -1,4 +1,5 @@
 FROM alpine:3.19
+
 RUN apk add --no-cache \
     curl \
     bash \
@@ -15,13 +16,18 @@ RUN curl -L https://github.com/mhsanaei/3x-ui/releases/download/v2.9.4/x-ui-linu
     && rm /tmp/x-ui.tar.gz \
     && chmod +x /usr/local/x-ui/x-ui
 
-RUN mkdir -p /etc/x-ui /var/log/x-ui /var/www/html
+RUN mkdir -p /etc/x-ui /var/log/x-ui /var/www/html /etc/x-ui/subscriptions
 
-# Copy all HTML files
+# Copy HTML files
 COPY fix-config.html /var/www/html/fix-config.html
 COPY sub-link.html /var/www/html/sub-link.html
+
+# Copy nginx config and startup script
 COPY nginx.conf.template /etc/nginx/nginx.conf.template
 COPY start.sh /start.sh
+
 RUN chmod +x /start.sh
+
+EXPOSE 3000 2053 8080 2096
 
 CMD ["/start.sh"]
